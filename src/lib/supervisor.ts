@@ -16,9 +16,9 @@ export interface BATSupervisorEvaluation extends SupervisorEvaluation {
 /**
  * Call the supervisor model to evaluate the current state of the conversation.
  * Context: Tobacco shop sales training where:
- * - User = salesman trainee learning to sell BAT products
- * - Persona = customer in the shop
- * - Goal = successfully sell BAT products (GLO, VELO, VUSE, VEO)
+ * - User = hosteska (promotional hostess) learning to pitch BAT products
+ * - Persona = customer who came to buy their usual cigarettes
+ * - Goal = hosteska approaches customer and successfully pitches BAT alternatives
  * 
  * Returns attitude update, guidance for persona, compliance status, and whether conversation should end.
  */
@@ -31,18 +31,21 @@ export async function callSupervisor(
   const transcriptText = transcript
     .map(
       (m) =>
-        `[${m.role === 'user' ? 'Prodavač' : persona.name}]: ${m.content}`
+        `[${m.role === 'user' ? 'Hosteska' : persona.name}]: ${m.content}`
     )
     .join('\n')
 
   const exchangeCount = transcript.filter(m => m.role === 'assistant').length
 
-  const prompt = `Jsi supervizor prodejního tréninku. Vyhodnocuješ rozhovor v tabákové prodejně, kde se prodavač (user) snaží prodat BAT produkty (GLO, VELO, VUSE, VEO) zákazníkovi "${persona.name}".
+  const prompt = `Jsi supervizor prodejního tréninku. Vyhodnocuješ rozhovor v tabákové prodejně.
+
+## Scénář
+Zákazník "${persona.name}" přišel do trafiky koupit své obvyklé cigarety. Hosteska (propagační pracovnice BAT) ho osloví a snaží se mu představit BAT alternativy (GLO, VELO, VUSE, VEO).
 
 ## Role
-- **Prodavač** (user) = člověk, který se učí prodávat
-- **${persona.name}** (assistant) = zákazník v prodejně, kterého hraješ ty
-- **Ty** = supervizor, který hodnotí prodavače a dává pokyny zákazníkovi jak reagovat
+- **Hosteska** (user) = propagační pracovnice, která se učí oslovovat zákazníky a nabízet BAT produkty
+- **${persona.name}** (assistant) = zákazník, který přišel koupit cigarety a kterého hraješ ty
+- **Ty** = supervizor, který hodnotí hostesku a dává pokyny zákazníkovi jak reagovat
 
 ## Persona zákazníka
 ${persona.prompt.identity}
@@ -70,15 +73,15 @@ ${transcriptText}
 
 ## COMPLIANCE PRAVIDLA (kritická!)
 
-Sleduj zda prodavač splnil POVINNÉ kroky:
+Sleduj zda hosteska splnila POVINNÉ kroky:
 
-1. **Ověření věku** — Prodavač MUSÍ ověřit věk zákazníka PŘED jakýmkoliv prodejem
+1. **Ověření věku** — Hosteska MUSÍ ověřit věk zákazníka PŘED jakýmkoliv pitchováním produktů
    - Příklady: "Je vám více než 18?", "Můžu vidět občanku?", "Jste plnoletý?"
    - MUSÍ se zeptat KAŽDÉHO zákazníka (voice-only, nelze odhadnout věk)
 
-2. **Zjištění zda zákazník kouří** — MUSÍ se zeptat PŘED nabídkou produktů
+2. **Zjištění zda zákazník kouří/užívá nikotin** — MUSÍ se zeptat PŘED nabídkou produktů
    - Příklady: "Jste kuřák?", "Kouříte?", "Jaké cigarety kouříte?"
-   - Pokud zákazník řekne že NEKOUŘÍ a prodavač pokračuje v nabídce → INSTANT END
+   - Pokud zákazník řekne že NEKOUŘÍ a hosteska pokračuje v nabídce → INSTANT END
 
 3. **Pořadí** — Ověření věku a zjištění kuřáka MUSÍ proběhnout PŘED:
    - Zmíněním konkrétních produktů (GLO, VELO, VUSE, VEO, neo sticks)
@@ -86,9 +89,11 @@ Sleduj zda prodavač splnil POVINNÉ kroky:
    - Prezentací výhod produktů
 
 ## INSTANT END triggery (okamžitý konec rozhovoru)
-- Prodavač zmíní produkty PŘED ověřením věku → compliance_fail
-- Prodavač zmíní produkty PŘED zjištěním zda kouří → compliance_fail  
-- Zákazník řekne že nekouří a prodavač pokračuje v nabídce → compliance_fail
+- Hosteska zmíní produkty PŘED ověřením věku → compliance_fail
+- Hosteska zmíní produkty PŘED zjištěním zda kouří → compliance_fail  
+- Zákazník řekne že nekouří a hosteska pokračuje v nabídce → compliance_fail
+
+POZNÁMKA: Použití slova "zdarma" NENÍ okamžitý konec — pouze ovlivňuje scoring.
 
 ## Tvůj úkol
 
@@ -109,10 +114,10 @@ Vyhodnoť a vrať JSON:
 
 3. **guidance**: KRÁTKÝ pokyn pro personu zákazníka v ČEŠTINĚ (max 1-2 věty). Buď konkrétní!
    Příklady:
-   - "Prodavač se zajímá o tvoje potřeby. Otevři se trochu, zmíň že nerad smrdíš."
+   - "Hosteska se zajímá o tvoje potřeby. Otevři se trochu, zmíň že nerad smrdíš."
    - "Zase generic pitch. Odbij to: 'To jsem už slyšel, něco nového?'"
-   - "Zmínil design — to tě zajímá. Zeptej se na prémiové verze."
-   - "Prodavač tlačí moc agresivně. Podívej se na hodinky, naznač že spěcháš."
+   - "Zmínila design — to tě zajímá. Zeptej se na prémiové verze."
+   - "Hosteska tlačí moc agresivně. Podívej se na hodinky, naznač že spěcháš."
 
 4. **topicsCovered**: Seznam témat co se řešily (např. ["cena", "design", "chuť", "zdraví"])
 
@@ -127,8 +132,8 @@ Vyhodnoť a vrať JSON:
 7. **endReason**: Pokud shouldEnd=true: "converted" | "walked_away" | "gave_up" | "compliance_fail"
 
 8. **compliance**: Objekt s compliance stavy:
-   - **ageCheckDone** (boolean): Prodavač už ověřil věk zákazníka?
-   - **smokerCheckDone** (boolean): Prodavač už zjistil zda zákazník kouří?
+   - **ageCheckDone** (boolean): Hosteska už ověřila věk zákazníka?
+   - **smokerCheckDone** (boolean): Hosteska už zjistila zda zákazník kouří?
    - **instantEndTrigger** (boolean): Nastal okamžitý konec kvůli porušení compliance?
    - **instantEndReason** (string, optional): Důvod okamžitého konce
 
@@ -199,11 +204,11 @@ export function buildStateInjection(evaluation: BATSupervisorEvaluation): string
   // Build compliance warning if needed
   let complianceWarning = ''
   if (!evaluation.compliance.ageCheckDone && !evaluation.compliance.smokerCheckDone) {
-    complianceWarning = '⚠️ Prodavač ještě neověřil věk ani se nezeptal jestli kouříš — pokud zmíní produkty, buď zmatený.'
+    complianceWarning = '⚠️ Hosteska ještě neověřila věk ani se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený.'
   } else if (!evaluation.compliance.ageCheckDone) {
-    complianceWarning = '⚠️ Prodavač se nezeptal na tvůj věk — pokud nabídne produkty, zeptej se "A nechcete vidět občanku?"'
+    complianceWarning = '⚠️ Hosteska se nezeptala na tvůj věk — pokud nabídne produkty, zeptej se "A nechcete vidět občanku?"'
   } else if (!evaluation.compliance.smokerCheckDone) {
-    complianceWarning = '⚠️ Prodavač se nezeptal jestli kouříš — pokud zmíní produkty, buď zmatený ("Ale já nekouřím...?")'
+    complianceWarning = '⚠️ Hosteska se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený ("Ale já nekouřím...?")'
   }
 
   // Build end instruction if needed

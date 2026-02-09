@@ -1,6 +1,6 @@
 # BAT Sales Training Demo — Specification
 
-> **Goal:** Train salespeople to sell BAT nicotine products (GLO, Velo, Vuse) in tobacco shop scenarios.
+> **Goal:** Train hostesky (promotional hostesses) to pitch BAT nicotine products (GLO, Velo, Vuse) to customers in tobacco shop scenarios.
 
 ## Architecture (Preserved from ai-convince-demo)
 
@@ -23,6 +23,7 @@
 
 **What changes:**
 - Personas: tobacco shop customers instead of health coaching
+- Scenario: customer comes to buy cigarettes, hosteska approaches them to pitch BAT alternatives
 - Compliance engine: forbidden words, age verification, smoker check
 - Scoring categories: relationship, needs discovery, product presentation, compliance
 
@@ -234,24 +235,24 @@ verifyProductClaim(productId: string, claim: string): { valid: boolean; note?: s
 
 ### Cross-Selling (During Conversation)
 
-Cross-selling is a **salesman skill** — pivoting to another product BEFORE the customer fully rejects and walks away.
+Cross-selling is a **hosteska skill** — pivoting to another product BEFORE the customer fully rejects and walks away.
 
 ```
 Customer: "Hele, tohle zahřívaný mě nezajímá..."
-Salesman (good): "Rozumím. A co kdybyste zkusil VELO? Jsou úplně bez kouře..."
-Salesman (bad): *keeps pushing GLO* → attitude drops → session ends rejected
+Hosteska (good): "Rozumím. A co kdybyste zkusil VELO? Jsou úplně bez kouře..."
+Hosteska (bad): *keeps pushing GLO* → attitude drops → session ends rejected
 ```
 
 **How it works:**
-- Salesman recognizes resistance signals during conversation
+- Hosteska recognizes resistance signals during conversation
 - Pivots to alternative product (GLO → VELO → Vuse)
 - If pivot is smooth and matches customer concerns → attitude may recover
-- If salesman ignores signals and keeps pushing → attitude drops to 0 → **session ends**
+- If hosteska ignores signals and keeps pushing → attitude drops to 0 → **session ends**
 
 **Once session ends with `rejected` or `walked_away` — it's over. No retries.**
 
 **Scoring considers:**
-- Did salesman recognize resistance early?
+- Did hosteska recognize resistance early?
 - Did they pivot smoothly or keep pushing?
 - Did the alternative match customer's stated concerns?
 
@@ -274,6 +275,8 @@ Salesman (bad): *keeps pushing GLO* → attitude drops → session ends rejected
 
 ### Mandatory Flow (Compliance)
 
+**Scenario:** Customer comes to tobacco shop to buy their usual cigarettes. Hosteska (promotional hostess) approaches them to talk about BAT alternatives.
+
 1. **Age Verification** (BEFORE product talk)
    - Must ask EVERY customer (voice-only, no visual check possible)
    - "Můžu se zeptat, je vám více než 18 let?"
@@ -292,23 +295,25 @@ Salesman (bad): *keeps pushing GLO* → attitude drops → session ends rejected
 
 ---
 
-## Compliance Rules (Tracked on SALESMAN)
+## Compliance Rules (Tracked on HOSTESKA)
 
-The salesman (user) is being evaluated on these rules. The AI customer doesn't enforce them — the **scoring system** does.
+The hosteska (user) is being evaluated on these rules. The AI customer doesn't enforce them — the **scoring system** does.
 
-### Forbidden Words/Phrases
+### Forbidden Words/Phrases (Affects Scoring, NOT Instant End)
 | ❌ Wrong | ✅ Correct | Context |
 |----------|-----------|---------|
 | "kouřit GLO" | "užívat GLO" | GLO is "used", not "smoked" |
-| "zdarma" | "bez poplatku" / "v ceně" | Word "free" is forbidden |
+| "zdarma" | "bez poplatku" / "v ceně" | Word "free" is discouraged |
 | "zdravější" | "méně škodlivé" | Cannot claim health benefits |
+
+**Note:** Using forbidden words affects the compliance score but does NOT trigger instant session end.
 
 ### Required Actions (INSTANT END triggers)
 | Action | When | Consequence if Missed |
 |--------|------|----------------------|
-| Age check | **EVERY session** (no visual, voice only) | **INSTANT SESSION END** if selling starts without age verification |
+| Age check | **EVERY session** (no visual, voice only) | **INSTANT SESSION END** if product pitch starts without age verification |
 | Smoker check | Before ANY product talk | **INSTANT SESSION END** if products mentioned before asking |
-| End if non-smoker | Customer reveals they don't smoke | **INSTANT SESSION END** if salesman continues pitching |
+| End if non-smoker | Customer reveals they don't smoke | **INSTANT SESSION END** if hosteska continues pitching |
 
 These are hard fails — the session terminates immediately with `outcome: 'compliance_fail'`.
 
@@ -316,7 +321,7 @@ These are hard fails — the session terminates immediately with `outcome: 'comp
 
 ### How It Works
 
-1. **Supervisor** watches salesman's messages in real-time
+1. **Supervisor** watches hosteska's messages in real-time
 2. **Compliance engine** flags violations (stored in session state)
 3. **AI customer** may react if violation affects conversation ("Já nekouřím...")
 4. **Final score** reflects all violations in the compliance category
@@ -325,7 +330,7 @@ These are hard fails — the session terminates immediately with `outcome: 'comp
 
 Compliance is evaluated by LLMs, not regex patterns:
 - **Supervisor** handles instant-end triggers (age/smoker check violations)
-- **Scoring** evaluates forbidden words and flow quality post-conversation
+- **Scoring** evaluates forbidden words and flow quality post-conversation (not instant end)
 
 This allows natural language understanding of different phrasings.
 
@@ -375,15 +380,15 @@ Same as original (0-10), but with BAT-specific triggers:
 ### Compliance Scoring Details (0-10)
 
 ```
-10: Perfect compliance — all checks done, no violations
- 8: Minor issue (e.g., slightly late age check)
- 5: One forbidden word used (e.g., "zdarma")
- 0: Critical failure — skipped smoker check, sold to non-smoker, no age check
+10: Perfect compliance — all checks done, no forbidden words
+ 8: Minor issue (e.g., slightly late age check, or one forbidden word)
+ 5: Multiple forbidden words or sloppy flow
+ 0: Critical failure — skipped smoker check, pitched to non-smoker, no age check
 ```
 
 ### Persistence Bonus
 
-When customer says "nevím", "nechci", "nezajímá mě to" and salesman pushes through skillfully (not aggressively), award bonus points to Zjišťování potřeb category.
+When customer says "nevím", "nechci", "nezajímá mě to" and hosteska pushes through skillfully (not aggressively), award bonus points to Zjišťování potřeb category.
 
 ### Report Output
 
@@ -417,34 +422,34 @@ interface BATScore {
 
 ### Who Is Who
 - **AI (Realtime Voice)** = Customer persona (busy shopper, skeptic, etc.)
-- **User (Human Trainee)** = Salesman practicing their pitch
-- **Supervisor** = Watches the salesman, guides the AI customer's reactions
+- **User (Human Trainee)** = Hosteska practicing their pitch
+- **Supervisor** = Watches the hosteska, guides the AI customer's reactions
 
-### Compliance Tracking (Watches the SALESMAN)
+### Compliance Tracking (Watches the HOSTESKA)
 
 The supervisor monitors the **user's messages** for:
-1. Age verification — did they ask for ID if customer looks young?
+1. Age verification — did they ask the customer's age?
 2. Smoker check — did they ask "Jste kuřák?" before talking products?
-3. Forbidden words — did they say "kouřit GLO", "zdarma", etc.?
+3. Forbidden words — did they say "kouřit GLO", "zdarma", etc.? (affects score, not instant end)
 4. Flow violations — did they pitch products before confirming smoker?
 
 ### State Injection Block (Czech)
 
-Tells the AI customer how to behave based on salesman's performance:
+Tells the AI customer how to behave based on hosteska's performance:
 
 ```
 ===== STAV ROZHOVORU =====
 NÁLADA: 4/10 (klesá)
 FÁZE: DEFENSE  
-POKYN: Prodavač je příliš agresivní. Buď netrpělivý, naznač že spěcháš.
-COMPLIANCE: ⚠️ Prodavač se nezeptal jestli kouříš — pokud zmíní produkty, buď zmatený ("Ale já nekouřím...?")
+POKYN: Hosteska je příliš agresivní. Buď netrpělivý, naznač že spěcháš.
+COMPLIANCE: ⚠️ Hosteska se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený ("Ale já nekouřím...?")
 TÉMATA: cena, čas
 =============================
 ```
 
 ### Customer Reactions to Compliance Failures
 
-| Salesman Violation | Customer Reaction |
+| Hosteska Violation | Customer Reaction |
 |--------------------|-------------------|
 | Skipped smoker check, started pitching | "Počkejte, já ani nekouřím..." (confused) |
 | Used "zdarma" | No reaction (customer doesn't know rules) |
@@ -453,7 +458,7 @@ TÉMATA: cena, čas
 
 ### Supervisor Prompt Additions
 
-The supervisor evaluates the **salesman's performance**:
+The supervisor evaluates the **hosteska's performance**:
 1. Did they build rapport before pitching?
 2. Did they ask discovery questions (smoking habits, preferences)?
 3. Did they match product to customer needs?
@@ -603,7 +608,7 @@ Jsi Adam Berg, 35 let, Senior Associate v mezinárodní advokátní kanceláři 
 }
 ```
 
-### Adam's BAT Experience (Key for Salesman)
+### Adam's BAT Experience (Key for Hosteska)
 
 | Product | Adam's Experience | Opportunity |
 |---------|------------------|-------------|
