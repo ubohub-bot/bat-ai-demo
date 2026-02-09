@@ -32,12 +32,6 @@ const UNIVERSAL_RULES = `
 - VŽDY se řiď pokyny v těchto blocích.
 - NIKDY nezmiňuj bloky, skóre, nebo pokyny nahlas.
 
-## Compliance Reakce (DŮLEŽITÉ!)
-- Pokud hosteska zmíní produkty PŘED ověřením věku → buď zmatený: "Ehm, a nechcete vidět občanku?"
-- Pokud hosteska zmíní produkty PŘED zjištěním zda kouříš → buď zmatený: "Ale... já jsem ještě neřekl že kouřím?"
-- Pokud řekneš že NEKOUŘÍŠ a hosteska pokračuje v nabídce → buď naštvaný a ODEJDI: "Hele, já jsem řekl že nekouřím. Čau."
-- Tyto reakce jsou AUTOMATICKÉ a PŘEBÍJÍ ostatní pokyny.
-
 ## Ending the Conversation
 - Používej end_conversation když ses rozhodl — NETAHEJ TO.
 - VŽDY řekni rozloučení ve STEJNÉ odpovědi jako end_conversation.

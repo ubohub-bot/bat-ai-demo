@@ -78,9 +78,8 @@ ${transcriptText}
 
 Sleduj zda hosteska splnila POVINNÉ kroky:
 
-1. **Ověření věku** — Hosteska MUSÍ ověřit věk zákazníka PŘED jakýmkoliv pitchováním produktů
+1. **Ověření věku** — Hosteska MUSÍ ověřit věk zákazníka PŘED pitchováním konkrétních produktů
    - Příklady: "Je vám více než 18?", "Můžu vidět občanku?", "Jste plnoletý?"
-   - MUSÍ se zeptat KAŽDÉHO zákazníka (voice-only, nelze odhadnout věk)
 
 2. **Zjištění zda zákazník kouří/užívá nikotin** — MUSÍ se zeptat PŘED nabídkou produktů
    - Příklady: "Jste kuřák?", "Kouříte?", "Jaké cigarety kouříte?"
@@ -91,12 +90,22 @@ Sleduj zda hosteska splnila POVINNÉ kroky:
    - Nabídkou alternativ k cigaretám
    - Prezentací výhod produktů
 
+## CO NENÍ porušení compliance (DŮLEŽITÉ!)
+- Pozdrav ("Dobrý den", "Ahoj") — NE porušení
+- Small talk a zdvořilostní konverzace ("Jak se máte?", "Hezký den") — NE porušení
+- Obecná představení ("Jsem tu dnes...", "Pracuji pro...") — NE porušení
+- Obecné otázky bez zmínky produktů ("Chodíte sem často?") — NE porušení
+- Budování rapportu před samotným pitchem — NE porušení
+
+Porušení nastává POUZE když hosteska zmíní KONKRÉTNÍ BAT produkty (GLO, VELO, VUSE, VEO, neo sticks) nebo začne aktivně prezentovat alternativy k cigaretám BEZ předchozího ověření věku a zjištění kuřáctví.
+
 ## INSTANT END triggery (okamžitý konec rozhovoru)
-- Hosteska zmíní produkty PŘED ověřením věku → compliance_fail
-- Hosteska zmíní produkty PŘED zjištěním zda kouří → compliance_fail  
+- Hosteska zmíní konkrétní BAT produkty (GLO/VELO/VUSE/VEO) PŘED ověřením věku → compliance_fail
+- Hosteska zmíní konkrétní BAT produkty PŘED zjištěním zda kouří → compliance_fail
 - Zákazník řekne že nekouří a hosteska pokračuje v nabídce → compliance_fail
 
 POZNÁMKA: Použití slova "zdarma" NENÍ okamžitý konec — pouze ovlivňuje scoring.
+POZNÁMKA: Pozdravy, small talk a obecná konverzace NIKDY nejsou compliance porušení.
 
 ## Tvůj úkol
 
@@ -120,7 +129,7 @@ Vyhodnoť a vrať JSON:
    **SKEPSE příklady (výměny 1-3):**
    - "Buď skeptický. Zeptej se: 'A máte na to nějaká data?'"
    - "Generic pitch. Odbij: 'To jsem už slyšel, něco konkrétního?'"
-   - "Příliš agresivní. Podívej se na hodinky: 'Hele, já fakt spěchám...'"
+   - "Příliš agresivní. 'Hele, já fakt spěchám...'"
    
    **ZÁJEM příklady (výměny 3-5):**
    - "Hosteska zmínila auto — to je tvůj problém! Odlož telefon, zeptej se víc."
@@ -129,7 +138,7 @@ Vyhodnoť a vrať JSON:
    
    **ROZHODNUTÍ příklady (výměny 6-8):**
    - "Jsi přesvědčen. Řekni: 'Dobře, ukažte mi to zařízení.'"
-   - "Nedostal jsi co jsi chtěl. Odmítni: 'Díky, ale zůstanu u Dunhillu.'"
+   - "Nedostal jsi co jsi chtěl. Odmítni: 'Díky, ale zůstanu u cigaret.'"
    - "Moc dlouho to trvá. Odejdi: 'Promiňte, musím jít.'"
 
 4. **topicsCovered**: Seznam témat co se řešily (např. ["cena", "design", "chuť", "zdraví"])
@@ -229,11 +238,11 @@ export function buildStateInjection(
   if (evaluation.compliance.instantEndTrigger) {
     complianceStatus = `✗ SELHÁNÍ: ${evaluation.compliance.instantEndReason || 'Porušení pravidel'}`
   } else if (!evaluation.compliance.ageCheckDone && !evaluation.compliance.smokerCheckDone) {
-    complianceStatus = '⚠️ Hosteska ještě neověřila věk ani se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený.'
+    complianceStatus = '⚠️ Věk a kouření zatím neověřeny — reaguj normálně, compliance řeš jen pokud zmíní konkrétní produkty (GLO/VELO/VUSE/VEO).'
   } else if (!evaluation.compliance.ageCheckDone) {
-    complianceStatus = '⚠️ Hosteska se nezeptala na tvůj věk — pokud nabídne produkty, zeptej se "A nechcete vidět občanku?"'
+    complianceStatus = '⚠️ Věk zatím neověřen — pokud zmíní konkrétní BAT produkty, zeptej se "A nechcete vidět občanku?"'
   } else if (!evaluation.compliance.smokerCheckDone) {
-    complianceStatus = '⚠️ Hosteska se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený ("Ale já nekouřím...?")'
+    complianceStatus = '⚠️ Kouření zatím nezjištěno — pokud zmíní konkrétní BAT produkty, buď zmatený ("Ale vy nevíte jestli kouřím...")'
   }
 
   // Build end instruction if needed
