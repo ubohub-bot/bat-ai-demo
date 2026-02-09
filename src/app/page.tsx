@@ -528,7 +528,32 @@ function EndedScreen({
 // ============================================
 // Debug Panel
 // ============================================
-function DebugPanel({ events, moodHistory }: { events: DebugEvent[]; moodHistory: number[] }) {
+function DebugPanel({ events, moodHistory, transcript }: { events: DebugEvent[]; moodHistory: number[]; transcript: TranscriptMessage[] }) {
+  const [copied, setCopied] = useState(false)
+
+  const formatTranscriptForCopy = () => {
+    return transcript
+      .map((m) => `[${m.role === 'user' ? 'Hosteska' : 'Zákazník'}]: ${m.content}`)
+      .join('\n')
+  }
+
+  const copyTranscript = async () => {
+    try {
+      await navigator.clipboard.writeText(formatTranscriptForCopy())
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // fallback
+      const ta = document.createElement('textarea')
+      ta.value = formatTranscriptForCopy()
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -574,6 +599,31 @@ function DebugPanel({ events, moodHistory }: { events: DebugEvent[]; moodHistory
                 style={{ height: `${(mood / 10) * 100}%` }}
                 title={`${mood}/10`}
               />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Transcript log */}
+      {transcript.length > 0 && (
+        <div className="border-b border-zinc-800">
+          <div className="flex items-center justify-between px-4 pt-3 pb-1">
+            <p className="text-xs text-zinc-500">Transcript ({transcript.length})</p>
+            <button
+              onClick={copyTranscript}
+              className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 transition-colors"
+            >
+              {copied ? 'Zkopirováno!' : 'Kopírovat'}
+            </button>
+          </div>
+          <div className="max-h-48 overflow-y-auto px-4 pb-3 space-y-1">
+            {transcript.map((m, i) => (
+              <div key={i} className="text-[11px]">
+                <span className={m.role === 'user' ? 'text-emerald-400' : 'text-sky-400'}>
+                  [{m.role === 'user' ? 'Hosteska' : 'Zákazník'}]
+                </span>{' '}
+                <span className="text-zinc-300">{m.content}</span>
+              </div>
             ))}
           </div>
         </div>
@@ -759,7 +809,7 @@ function SessionPage({ userName, showDebug, setShowDebug, onLogout }: {
           {showDebug && (
             <div className="w-96 border-l border-zinc-800 p-4 overflow-y-auto">
               <h3 className="text-sm font-medium text-zinc-400 mb-3">🐛 Debug Panel</h3>
-              <DebugPanel events={session.debugEvents} moodHistory={session.moodHistory} />
+              <DebugPanel events={session.debugEvents} moodHistory={session.moodHistory} transcript={session.transcript} />
             </div>
           )}
         </div>
@@ -779,7 +829,7 @@ function SessionPage({ userName, showDebug, setShowDebug, onLogout }: {
           {showDebug && (
             <div className="w-96 border-l border-zinc-800 p-4 overflow-y-auto">
               <h3 className="text-sm font-medium text-zinc-400 mb-3">🐛 Debug Panel</h3>
-              <DebugPanel events={session.debugEvents} moodHistory={session.moodHistory} />
+              <DebugPanel events={session.debugEvents} moodHistory={session.moodHistory} transcript={session.transcript} />
             </div>
           )}
         </div>
