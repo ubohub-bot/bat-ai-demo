@@ -48,11 +48,10 @@ export interface BATPersona {
 
 /** Compliance violation detected in salesman's speech */
 export interface ComplianceViolation {
-  word: string
-  context: string // surrounding text
-  severity: 'warning' | 'violation'
-  message: string
-  timestamp: number
+  type: 'forbidden_word' | 'flow_violation'
+  detail: string
+  severity: 'warning' | 'violation' | 'instant_end'
+  timestamp?: number
 }
 
 /** BAT Score — post-conversation evaluation (0-10 scale) */

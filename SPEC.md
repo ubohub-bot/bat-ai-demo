@@ -321,22 +321,13 @@ These are hard fails — the session terminates immediately with `outcome: 'comp
 3. **AI customer** may react if violation affects conversation ("Já nekouřím...")
 4. **Final score** reflects all violations in the compliance category
 
-### Word Detection
+### Compliance Detection (LLM-based, not regex)
 
-```typescript
-interface ComplianceViolation {
-  word: string
-  context: string        // surrounding text
-  severity: 'warning' | 'violation'
-  timestamp: number
-}
+Compliance is evaluated by LLMs, not regex patterns:
+- **Supervisor** handles instant-end triggers (age/smoker check violations)
+- **Scoring** evaluates forbidden words and flow quality post-conversation
 
-const FORBIDDEN_WORDS = [
-  { pattern: /kouř\w*\s+glo/i, message: 'GLO se "užívá", ne "kouří"' },
-  { pattern: /\bzdarma\b/i, message: 'Slovo "zdarma" je zakázáno' },
-  { pattern: /\bzdrav\w+/i, message: 'Nelze tvrdit zdravotní benefity', severity: 'warning' },
-]
-```
+This allows natural language understanding of different phrasings.
 
 ---
 
