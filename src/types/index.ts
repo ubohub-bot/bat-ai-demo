@@ -64,13 +64,13 @@ export interface BATScore {
     compliance: number // Soulad s pravidly (0-10)
   }
   complianceDetails: {
-    ageVerification: 'passed' | 'skipped' | 'failed' | 'not_required'
+    ageVerification: 'passed' | 'skipped' | 'failed'
     smokerCheck: 'passed' | 'skipped' | 'failed'
-    forbiddenWords: ComplianceViolation[]
+    forbiddenWords: string[] // list of violations found
   }
-  highlights: string[] // What went well
-  improvements: string[] // What to improve
-  fails: string[] // Critical failures
+  highlights: string[] // What went well (Czech)
+  improvements: string[] // What to improve (Czech)
+  fails: string[] // Critical failures (Czech)
   outcome: 'converted' | 'rejected' | 'walked_away' | 'compliance_fail'
 }
 
