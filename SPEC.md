@@ -603,9 +603,7 @@ Nekouříš v autě (pach na kůži sedaček) ani v bytě (chodíš na terasu). 
 - [ ] Add "fails" section for critical violations
 
 ### Phase 5: UI Updates
-- [ ] Attitude meter visualization
-- [ ] Compliance warnings display
-- [ ] Final report card with all sections
+- [ ] Final report card with all sections (scores, highlights, improvements, fails)
 
 ---
 
