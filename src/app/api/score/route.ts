@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { scoreSession } from '@/lib/scoring'
-import { personas } from '@/lib/personas'
 import { TranscriptMessage } from '@/types'
 
 /**
@@ -11,23 +10,13 @@ export async function POST(request: Request) {
   try {
     const {
       transcript,
-      personaId,
       outcome,
     }: {
       transcript: TranscriptMessage[]
-      personaId: string
-      outcome: 'converted' | 'rejected' | 'walked_away'
+      outcome: 'converted' | 'rejected' | 'walked_away' | 'compliance_fail'
     } = await request.json()
 
-    const persona = personas[personaId]
-    if (!persona) {
-      return NextResponse.json(
-        { error: 'Persona not found' },
-        { status: 404 }
-      )
-    }
-
-    const score = await scoreSession(transcript, persona, outcome)
+    const score = await scoreSession(transcript, outcome)
     return NextResponse.json(score)
   } catch (error) {
     console.error('Scoring error:', error)

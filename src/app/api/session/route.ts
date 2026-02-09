@@ -1,39 +1,20 @@
 import { NextResponse } from 'next/server'
 import { getRealtimeToken } from '@/lib/openai'
-import { buildPersonaPrompt } from '@/lib/prompt'
-import { getScenario, listScenarios, getPersona } from '@/lib/personas'
+import { buildPersonaPrompt, getPersonaConfig } from '@/lib/prompt'
 import { CreateSessionResponse } from '@/types'
 
 /**
  * POST /api/session — Create a new realtime session
  * Returns ephemeral token + persona info for the client
  */
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    const { scenarioId } = await request.json()
-    const scenario = getScenario(scenarioId || 'adam_berg_sales')
-
-    if (!scenario) {
-      return NextResponse.json(
-        { error: 'Scenario not found' },
-        { status: 404 }
-      )
-    }
-
-    const batPersona = getPersona(scenario.persona.id)
-    if (!batPersona) {
-      return NextResponse.json(
-        { error: 'Persona not found' },
-        { status: 404 }
-      )
-    }
-
-    const { systemPrompt, tools } = buildPersonaPrompt(batPersona)
+    const { systemPrompt, tools, config } = buildPersonaPrompt()
 
     const { clientSecret } = await getRealtimeToken(
       systemPrompt,
       tools as unknown as Array<Record<string, unknown>>,
-      scenario.persona.voice
+      config.voice
     )
 
     const sessionId = crypto.randomUUID()
@@ -42,10 +23,10 @@ export async function POST(request: Request) {
       sessionId,
       clientSecret,
       persona: {
-        id: scenario.persona.id,
-        name: scenario.persona.name,
-        voice: scenario.persona.voice,
-        initialAttitude: scenario.persona.initialAttitude,
+        id: config.id,
+        name: config.name,
+        voice: config.voice,
+        initialAttitude: config.initialAttitude,
       },
     }
 
@@ -60,13 +41,16 @@ export async function POST(request: Request) {
 }
 
 /**
- * GET /api/session — List available scenarios
+ * GET /api/session — Get current persona info
  */
 export async function GET() {
-  const scenarios = listScenarios().map((s) => ({
-    id: s.id,
-    persona: { id: s.persona.id, name: s.persona.name },
-    goal: { title: s.goal.title, description: s.goal.description },
-  }))
-  return NextResponse.json({ scenarios })
+  const config = getPersonaConfig()
+  return NextResponse.json({
+    persona: {
+      id: config.id,
+      name: config.name,
+      voice: config.voice,
+      initialAttitude: config.initialAttitude,
+    },
+  })
 }

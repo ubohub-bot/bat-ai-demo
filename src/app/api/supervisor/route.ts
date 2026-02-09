@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { callSupervisor, buildStateInjection } from '@/lib/supervisor'
-import { personas } from '@/lib/personas'
 import { SupervisorRequest, SupervisorResponse } from '@/types'
 
 /**
@@ -11,26 +10,27 @@ import { SupervisorRequest, SupervisorResponse } from '@/types'
 export async function POST(request: Request) {
   try {
     const body: SupervisorRequest = await request.json()
-    const { transcript, moodHistory, currentAttitude, personaId } = body
-
-    const persona = personas[personaId]
-    if (!persona) {
-      return NextResponse.json(
-        { error: 'Persona not found' },
-        { status: 404 }
-      )
-    }
+    const { transcript, moodHistory, currentAttitude } = body
 
     const evaluation = await callSupervisor(
       transcript,
       moodHistory,
-      currentAttitude,
-      persona
+      currentAttitude
     )
 
     // Count exchanges (assistant turns)
     const exchangeCount = transcript.filter(m => m.role === 'assistant').length
-    const stateInjection = buildStateInjection(evaluation, exchangeCount)
+
+    const stateInjection = buildStateInjection({
+      attitude: evaluation.attitude,
+      attitudeDirection: evaluation.attitudeDirection,
+      guidance: evaluation.guidance,
+      exchangeCount,
+      isOnTrack: evaluation.isOnTrack,
+      shouldEnd: evaluation.shouldEnd,
+      endReason: evaluation.endReason,
+      compliance: evaluation.compliance,
+    })
 
     const response: SupervisorResponse = {
       evaluation,
