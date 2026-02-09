@@ -98,13 +98,13 @@ export interface TranscriptMessage {
 
 /** Supervisor evaluation — runs during conversation */
 export interface SupervisorEvaluation {
-  attitude: number // 1-10 current attitude
+  attitude: number // 0-10 current attitude
   attitudeDirection: 'rising' | 'falling' | 'stable'
   guidance: string // natural language guidance for persona (Czech)
   topicsCovered: string[]
   isOnTrack: boolean // is persona staying in character?
   shouldEnd: boolean // should conversation end?
-  endReason?: 'converted' | 'walked_away' | 'gave_up'
+  endReason?: 'converted' | 'walked_away' | 'gave_up' | 'compliance_fail'
 }
 
 /** Post-conversation score */
