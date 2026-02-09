@@ -21,14 +21,20 @@ export const save = mutation({
       v.object({
         overall: v.number(),
         categories: v.object({
-          empathy: v.number(),
-          argumentQuality: v.number(),
-          persistence: v.number(),
-          adaptability: v.number(),
+          relationship: v.number(),
+          needsDiscovery: v.number(),
+          productPresentation: v.number(),
+          compliance: v.number(),
+        }),
+        complianceDetails: v.object({
+          ageVerification: v.string(),
+          smokerCheck: v.string(),
+          forbiddenWords: v.array(v.string()),
         }),
         highlights: v.array(v.string()),
         improvements: v.array(v.string()),
-        summary: v.string(),
+        fails: v.array(v.string()),
+        summary: v.optional(v.string()),
       })
     ),
     debugEvents: v.optional(

@@ -6,7 +6,7 @@ export default defineSchema({
     userName: v.string(),
     personaId: v.string(),
     personaName: v.string(),
-    outcome: v.string(), // 'converted' | 'rejected' | 'walked_away'
+    outcome: v.string(), // 'converted' | 'rejected' | 'walked_away' | 'compliance_fail'
     transcript: v.array(
       v.object({
         role: v.string(),
@@ -20,14 +20,20 @@ export default defineSchema({
       v.object({
         overall: v.number(),
         categories: v.object({
-          empathy: v.number(),
-          argumentQuality: v.number(),
-          persistence: v.number(),
-          adaptability: v.number(),
+          relationship: v.number(),
+          needsDiscovery: v.number(),
+          productPresentation: v.number(),
+          compliance: v.number(),
+        }),
+        complianceDetails: v.object({
+          ageVerification: v.string(),
+          smokerCheck: v.string(),
+          forbiddenWords: v.array(v.string()),
         }),
         highlights: v.array(v.string()),
         improvements: v.array(v.string()),
-        summary: v.string(),
+        fails: v.array(v.string()),
+        summary: v.optional(v.string()),
       })
     ),
     debugEvents: v.optional(
