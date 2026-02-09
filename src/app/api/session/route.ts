@@ -11,7 +11,7 @@ import { CreateSessionResponse } from '@/types'
 export async function POST(request: Request) {
   try {
     const { scenarioId } = await request.json()
-    const scenario = getScenario(scenarioId || 'pepik_healthy')
+    const scenario = getScenario(scenarioId || 'adam_berg_sales')
 
     if (!scenario) {
       return NextResponse.json(

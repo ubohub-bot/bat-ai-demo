@@ -52,7 +52,7 @@ export function useSession(userName: string): SessionHook {
   }, [])
 
   const clientRef = useRef<RealtimeClient | null>(null)
-  const personaIdRef = useRef('pepik')
+  const personaIdRef = useRef('adam_berg')
   const sessionStartRef = useRef(0)
   const supervisorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastSupervisorCallRef = useRef(0)
@@ -288,7 +288,7 @@ export function useSession(userName: string): SessionHook {
       const res = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenarioId: 'pepik_healthy' }),
+        body: JSON.stringify({ scenarioId: 'adam_berg_sales' }),
       })
 
       if (!res.ok) throw new Error(`Session API error: ${res.status}`)
