@@ -236,6 +236,20 @@ verifyProductClaim(productId: string, claim: string): { valid: boolean; note?: s
 | Lapsed GLO user | GLO (win back) |
 | Prefers fruit flavors | Vuse |
 
+### Cross-Selling Flow
+
+Salesman can pivot between products if customer rejects one:
+
+```
+GLO rejected → "A co kdybyste zkusil něco úplně jiného? VELO jsou nikotinové sáčky..."
+VELO rejected → "Rozumím. Máme taky Vuse, to je modernější vapování..."
+```
+
+**Scoring considers:**
+- Did salesman recognize rejection signals?
+- Was the pivot smooth or pushy?
+- Did they match the alternative to customer's stated concerns?
+
 ---
 
 ## Conversation Flow
@@ -256,7 +270,8 @@ verifyProductClaim(productId: string, claim: string): { valid: boolean; note?: s
 ### Mandatory Flow (Compliance)
 
 1. **Age Verification** (BEFORE product talk)
-   - If customer looks 18-25 → must ask for ID
+   - Must ask EVERY customer (voice-only, no visual check possible)
+   - "Můžu se zeptat, je vám více než 18 let?"
    - If under 18 → end conversation immediately
 
 2. **Smoker Check** (BEFORE product talk)
@@ -264,9 +279,10 @@ verifyProductClaim(productId: string, claim: string): { valid: boolean; note?: s
    - If NO → must end conversation immediately
    - Cannot promote products to non-smokers
 
-3. **Product Discussion** (only after smoker check passes)
+3. **Product Discussion** (only after both checks pass)
    - Present relevant products based on customer profile
    - Handle objections
+   - **Cross-selling allowed**: if customer rejects GLO → can pivot to VELO, etc.
    - Work toward closing
 
 ---
@@ -285,11 +301,13 @@ The salesman (user) is being evaluated on these rules. The AI customer doesn't e
 ### Required Actions (INSTANT END triggers)
 | Action | When | Consequence if Missed |
 |--------|------|----------------------|
-| Age check | Customer looks <25 | **INSTANT SESSION END** if selling starts without ID check |
+| Age check | **EVERY session** (no visual, voice only) | **INSTANT SESSION END** if selling starts without age verification |
 | Smoker check | Before ANY product talk | **INSTANT SESSION END** if products mentioned before asking |
 | End if non-smoker | Customer reveals they don't smoke | **INSTANT SESSION END** if salesman continues pitching |
 
 These are hard fails — the session terminates immediately with `outcome: 'compliance_fail'`.
+
+> **Note:** Since this is voice-only (no visual), age verification must happen in EVERY conversation — we cannot judge customer's appearance.
 
 ### How It Works
 
@@ -597,10 +615,17 @@ Nekouříš v autě (pach na kůži sedaček) ani v bytě (chodíš na terasu). 
 2. **Language** — Full Czech
 3. **Products catalog** — Basic for supervisor, full for scoring (see Product Catalog section)
 
+## Resolved Questions
+
+*(moved from Open)*
+
+3. **Age verification** — Must happen EVERY session (voice-only, no visual)
+4. **Cross-selling** — Allowed. Salesman can pivot: GLO → VELO → Vuse
+5. **First persona** — Adam Berg
+
 ## Open Questions
 
-1. **Multiple products** — Should scenarios focus on specific products (GLO-only, VELO-only)?
-2. **Additional personas** — What other customer archetypes after Adam Berg?
+1. **Additional personas** — What other customer archetypes after Adam Berg?
 
 ---
 
