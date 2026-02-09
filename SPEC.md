@@ -112,7 +112,9 @@ interface BATPersona extends Persona {
 
 ---
 
-## Compliance Rules
+## Compliance Rules (Tracked on SALESMAN)
+
+The salesman (user) is being evaluated on these rules. The AI customer doesn't enforce them — the **scoring system** does.
 
 ### Forbidden Words/Phrases
 | ❌ Wrong | ✅ Correct | Context |
@@ -125,8 +127,15 @@ interface BATPersona extends Persona {
 | Action | When | Consequence if Missed |
 |--------|------|----------------------|
 | Age check | Customer looks <25 | -10 compliance score |
-| Smoker check | Before ANY product talk | Auto-fail (-100 compliance) |
-| End if non-smoker | Customer says they don't smoke | Auto-fail if continues |
+| Smoker check | Before ANY product talk | Auto-fail (0 compliance) |
+| End if non-smoker | Customer reveals they don't smoke | Auto-fail if salesman continues pitching |
+
+### How It Works
+
+1. **Supervisor** watches salesman's messages in real-time
+2. **Compliance engine** flags violations (stored in session state)
+3. **AI customer** may react if violation affects conversation ("Já nekouřím...")
+4. **Final score** reflects all violations in the compliance category
 
 ### Word Detection
 
@@ -219,25 +228,51 @@ interface BATScore {
 
 ## Supervisor Adaptations
 
+### Who Is Who
+- **AI (Realtime Voice)** = Customer persona (busy shopper, skeptic, etc.)
+- **User (Human Trainee)** = Salesman practicing their pitch
+- **Supervisor** = Watches the salesman, guides the AI customer's reactions
+
+### Compliance Tracking (Watches the SALESMAN)
+
+The supervisor monitors the **user's messages** for:
+1. Age verification — did they ask for ID if customer looks young?
+2. Smoker check — did they ask "Jste kuřák?" before talking products?
+3. Forbidden words — did they say "kouřit GLO", "zdarma", etc.?
+4. Flow violations — did they pitch products before confirming smoker?
+
 ### State Injection Block (Czech)
+
+Tells the AI customer how to behave based on salesman's performance:
 
 ```
 ===== STAV ROZHOVORU =====
 NÁLADA: 4/10 (klesá)
-FÁZE: DEFENSE
-POKYN: Zákazník spěchá. Zkrať pitch, nabídni rychlou ukázku.
-COMPLIANCE: ⚠️ Nezeptal ses jestli kouří! Zeptej se HNED.
+FÁZE: DEFENSE  
+POKYN: Prodavač je příliš agresivní. Buď netrpělivý, naznač že spěcháš.
+COMPLIANCE: ⚠️ Prodavač se nezeptal jestli kouříš — pokud zmíní produkty, buď zmatený ("Ale já nekouřím...?")
 TÉMATA: cena, čas
 =============================
 ```
 
+### Customer Reactions to Compliance Failures
+
+| Salesman Violation | Customer Reaction |
+|--------------------|-------------------|
+| Skipped smoker check, started pitching | "Počkejte, já ani nekouřím..." (confused) |
+| Used "zdarma" | No reaction (customer doesn't know rules) |
+| Too pushy | "Hele, já fakt spěchám..." (defensive) |
+| Good rapport, asks about needs | Opens up, attitude rises |
+
 ### Supervisor Prompt Additions
 
-The supervisor now also tracks:
-1. Whether age check happened (if customer looks young)
-2. Whether smoker check happened (mandatory before products)
-3. Any forbidden words used by salesman
-4. Product relevance to customer profile
+The supervisor evaluates the **salesman's performance**:
+1. Did they build rapport before pitching?
+2. Did they ask discovery questions (smoking habits, preferences)?
+3. Did they match product to customer needs?
+4. Did they follow compliance rules?
+
+Then guides the AI customer to react realistically.
 
 ---
 
