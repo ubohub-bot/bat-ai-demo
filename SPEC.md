@@ -123,12 +123,14 @@ The salesman (user) is being evaluated on these rules. The AI customer doesn't e
 | "zdarma" | "bez poplatku" / "v ceně" | Word "free" is forbidden |
 | "zdravější" | "méně škodlivé" | Cannot claim health benefits |
 
-### Required Actions
+### Required Actions (INSTANT END triggers)
 | Action | When | Consequence if Missed |
 |--------|------|----------------------|
-| Age check | Customer looks <25 | -10 compliance score |
-| Smoker check | Before ANY product talk | Auto-fail (0 compliance) |
-| End if non-smoker | Customer reveals they don't smoke | Auto-fail if salesman continues pitching |
+| Age check | Customer looks <25 | **INSTANT SESSION END** if selling starts without ID check |
+| Smoker check | Before ANY product talk | **INSTANT SESSION END** if products mentioned before asking |
+| End if non-smoker | Customer reveals they don't smoke | **INSTANT SESSION END** if salesman continues pitching |
+
+These are hard fails — the session terminates immediately with `outcome: 'compliance_fail'`.
 
 ### How It Works
 
@@ -167,6 +169,7 @@ Same as original (0-10), but with BAT-specific triggers:
 | Relevant product match | +1 to +2 |
 | Addressing specific concerns | +1 |
 | Good flavor/price match | +1 |
+| **Pushing past objections** ("nevím", "nezajímá mě") | +1 (bonus for persistence) |
 
 ### Attitude Decrease (-)
 | Action | Impact |
@@ -176,38 +179,49 @@ Same as original (0-10), but with BAT-specific triggers:
 | Being pushy/aggressive | -2 to -3 |
 | Compliance violation (forbidden word) | -1 |
 
+### Session End Conditions
+- **Converted**: Attitude reaches 8+ and customer agrees
+- **Attitude zero**: Attitude drops to 0 → session ends (customer walks away)
+- **Compliance fail**: Instant end triggers (see above)
+
 ---
 
 ## Scoring System
 
-### Categories (Post-Conversation)
+### Categories (Post-Conversation) — Scale 0-10
 
 | Category | Weight | Description |
 |----------|--------|-------------|
-| Budování vztahu | 25% | Relationship building, rapport |
-| Zjišťování potřeb | 30% | Needs discovery quality |
-| Prezentace produktů | 25% | Product presentation skill |
-| Soulad s pravidly | 20% | Compliance (age, smoker, words) |
+| Budování vztahu | 25% | Relationship building, rapport (0-10) |
+| Zjišťování potřeb | 30% | Needs discovery quality (0-10) |
+| Prezentace produktů | 25% | Product presentation skill (0-10) |
+| Soulad s pravidly | 20% | Compliance (0-10) |
 
-### Compliance Scoring (0-10)
+**Overall score** = weighted average, also 0-10
+
+### Compliance Scoring Details (0-10)
 
 ```
-10: Perfect compliance
- 8: Minor warning (e.g., almost said forbidden word)
- 5: One violation (forbidden word used)
- 0: Critical failure (skipped smoker check, sold to non-smoker)
+10: Perfect compliance — all checks done, no violations
+ 8: Minor issue (e.g., slightly late age check)
+ 5: One forbidden word used (e.g., "zdarma")
+ 0: Critical failure — skipped smoker check, sold to non-smoker, no age check
 ```
+
+### Persistence Bonus
+
+When customer says "nevím", "nechci", "nezajímá mě to" and salesman pushes through skillfully (not aggressively), award bonus points to Zjišťování potřeb category.
 
 ### Report Output
 
 ```typescript
 interface BATScore {
-  overall: number  // 0-100
+  overall: number  // 0-10 (weighted average)
   categories: {
-    relationship: number      // Budování vztahu
-    needsDiscovery: number    // Zjišťování potřeb
-    productPresentation: number // Prezentace produktů
-    compliance: number        // Soulad s pravidly
+    relationship: number      // Budování vztahu (0-10)
+    needsDiscovery: number    // Zjišťování potřeb (0-10)
+    productPresentation: number // Prezentace produktů (0-10)
+    compliance: number        // Soulad s pravidly (0-10)
   }
   
   complianceDetails: {
