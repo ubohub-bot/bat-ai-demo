@@ -215,9 +215,16 @@ export function useSession(userName: string): SessionHook {
           score: scoreData
             ? {
                 overall: scoreData.overall,
-                categories: scoreData.categories,
+                categories: {
+                  relationship: scoreData.categories.relationship,
+                  needsDiscovery: scoreData.categories.needsDiscovery,
+                  productPresentation: scoreData.categories.productPresentation,
+                  compliance: scoreData.categories.compliance,
+                },
+                complianceDetails: scoreData.complianceDetails,
                 highlights: scoreData.highlights,
                 improvements: scoreData.improvements,
+                fails: scoreData.fails,
                 summary: scoreData.summary,
               }
             : undefined,

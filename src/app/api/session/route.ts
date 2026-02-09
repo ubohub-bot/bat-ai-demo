@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRealtimeToken } from '@/lib/openai'
 import { buildPersonaPrompt } from '@/lib/prompt'
-import { getScenario, listScenarios } from '@/lib/personas'
+import { getScenario, listScenarios, getPersona } from '@/lib/personas'
 import { CreateSessionResponse } from '@/types'
 
 /**
@@ -20,10 +20,15 @@ export async function POST(request: Request) {
       )
     }
 
-    const { systemPrompt, tools } = buildPersonaPrompt(
-      scenario.persona,
-      scenario.goal
-    )
+    const batPersona = getPersona(scenario.persona.id)
+    if (!batPersona) {
+      return NextResponse.json(
+        { error: 'Persona not found' },
+        { status: 404 }
+      )
+    }
+
+    const { systemPrompt, tools } = buildPersonaPrompt(batPersona)
 
     const { clientSecret } = await getRealtimeToken(
       systemPrompt,

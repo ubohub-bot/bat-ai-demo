@@ -172,10 +172,10 @@ export default function AdminPage() {
                           {s.score && (
                             <div className="grid grid-cols-4 gap-3 mb-4">
                               {[
-                                { label: 'Empatie', val: s.score.categories.empathy },
-                                { label: 'Argumenty', val: s.score.categories.argumentQuality },
-                                { label: 'Vytrvalost', val: s.score.categories.persistence },
-                                { label: 'Adaptabilita', val: s.score.categories.adaptability },
+                                { label: 'Budování vztahu', val: s.score.categories.relationship },
+                                { label: 'Zjišťování potřeb', val: s.score.categories.needsDiscovery },
+                                { label: 'Prezentace produktů', val: s.score.categories.productPresentation },
+                                { label: 'Soulad s pravidly', val: s.score.categories.compliance },
                               ].map((cat) => (
                                 <div
                                   key={cat.label}

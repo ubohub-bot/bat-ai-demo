@@ -94,6 +94,7 @@ function OutcomeBadge({
     converted: { label: '✅ Přesvědčen', cls: 'bg-green-900/50 text-green-400 border-green-800' },
     rejected: { label: '❌ Odmítnuto', cls: 'bg-red-900/50 text-red-400 border-red-800' },
     walked_away: { label: '🚪 Odešel', cls: 'bg-yellow-900/50 text-yellow-400 border-yellow-800' },
+    compliance_fail: { label: '⚠️ Porušení pravidel', cls: 'bg-orange-900/50 text-orange-400 border-orange-800' },
   }
 
   const { label, cls } = config[outcome]
@@ -463,10 +464,10 @@ function EndedScreen({
 
         {/* Category Scores */}
         <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 mb-4 space-y-3">
-          <ScoreBar label="Empatie" value={score.categories.empathy} />
-          <ScoreBar label="Kvalita argumentů" value={score.categories.argumentQuality} />
-          <ScoreBar label="Vytrvalost" value={score.categories.persistence} />
-          <ScoreBar label="Adaptabilita" value={score.categories.adaptability} />
+          <ScoreBar label="Budování vztahu" value={score.categories.relationship} />
+          <ScoreBar label="Zjišťování potřeb" value={score.categories.needsDiscovery} />
+          <ScoreBar label="Prezentace produktů" value={score.categories.productPresentation} />
+          <ScoreBar label="Soulad s pravidly" value={score.categories.compliance} />
         </div>
 
         {/* Summary */}

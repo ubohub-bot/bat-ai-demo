@@ -109,16 +109,22 @@ export interface SupervisorEvaluation {
 
 /** Post-conversation score */
 export interface PostConversationScore {
-  overall: number // 0-100
+  overall: number // 0-10
   categories: {
-    empathy: number
-    argumentQuality: number
-    persistence: number
-    adaptability: number
+    relationship: number // Budování vztahu (0-10)
+    needsDiscovery: number // Zjišťování potřeb (0-10)
+    productPresentation: number // Prezentace produktů (0-10)
+    compliance: number // Soulad s pravidly (0-10)
+  }
+  complianceDetails: {
+    ageVerification: 'passed' | 'skipped' | 'failed'
+    smokerCheck: 'passed' | 'skipped' | 'failed'
+    forbiddenWords: string[]
   }
   highlights: string[]
   improvements: string[]
-  outcome: 'converted' | 'rejected' | 'walked_away'
+  fails: string[]
+  outcome: 'converted' | 'rejected' | 'walked_away' | 'compliance_fail'
   summary: string
 }
 
