@@ -765,14 +765,24 @@ function SessionPage({ userName, showDebug, setShowDebug, onLogout }: {
         </div>
       )}
       {session.status === 'ended' && (
-        <EndedScreen
-          score={session.score}
-          transcript={session.transcript}
-          moodHistory={session.moodHistory}
-          currentAttitude={session.currentAttitude}
-          onRetry={session.startSession}
-          userName={userName}
-        />
+        <div className="flex min-h-screen">
+          <div className={`${showDebug ? 'flex-1' : 'w-full'} transition-all`}>
+            <EndedScreen
+              score={session.score}
+              transcript={session.transcript}
+              moodHistory={session.moodHistory}
+              currentAttitude={session.currentAttitude}
+              onRetry={session.startSession}
+              userName={userName}
+            />
+          </div>
+          {showDebug && (
+            <div className="w-96 border-l border-zinc-800 p-4 overflow-y-auto">
+              <h3 className="text-sm font-medium text-zinc-400 mb-3">🐛 Debug Panel</h3>
+              <DebugPanel events={session.debugEvents} moodHistory={session.moodHistory} />
+            </div>
+          )}
+        </div>
       )}
 
       {/* Debug toggle */}
