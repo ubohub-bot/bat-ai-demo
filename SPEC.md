@@ -236,19 +236,28 @@ verifyProductClaim(productId: string, claim: string): { valid: boolean; note?: s
 | Lapsed GLO user | GLO (win back) |
 | Prefers fruit flavors | Vuse |
 
-### Cross-Selling Flow
+### Cross-Selling (During Conversation)
 
-Salesman can pivot between products if customer rejects one:
+Cross-selling is a **salesman skill** — pivoting to another product BEFORE the customer fully rejects and walks away.
 
 ```
-GLO rejected → "A co kdybyste zkusil něco úplně jiného? VELO jsou nikotinové sáčky..."
-VELO rejected → "Rozumím. Máme taky Vuse, to je modernější vapování..."
+Customer: "Hele, tohle zahřívaný mě nezajímá..."
+Salesman (good): "Rozumím. A co kdybyste zkusil VELO? Jsou úplně bez kouře..."
+Salesman (bad): *keeps pushing GLO* → attitude drops → session ends rejected
 ```
+
+**How it works:**
+- Salesman recognizes resistance signals during conversation
+- Pivots to alternative product (GLO → VELO → Vuse)
+- If pivot is smooth and matches customer concerns → attitude may recover
+- If salesman ignores signals and keeps pushing → attitude drops to 0 → **session ends**
+
+**Once session ends with `rejected` or `walked_away` — it's over. No retries.**
 
 **Scoring considers:**
-- Did salesman recognize rejection signals?
-- Was the pivot smooth or pushy?
-- Did they match the alternative to customer's stated concerns?
+- Did salesman recognize resistance early?
+- Did they pivot smoothly or keep pushing?
+- Did the alternative match customer's stated concerns?
 
 ---
 
