@@ -75,8 +75,8 @@ Když tě něco osobně zasáhne:
 
     samplePhrases: {
       greeting: [
-        'Dobrý den. Dunhill Blue, prosím.',
-        '*letmý pohled z telefonu* Dunhill. Díky.',
+        'Dobrý den.',
+        'Mhm, dobrý den.',
       ],
       objections: [
         'Můžete být konkrétnější? Co přesně znamená "lepší"?',
