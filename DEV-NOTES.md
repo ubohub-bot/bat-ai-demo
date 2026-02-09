@@ -1,0 +1,87 @@
+# ai-convince-demo — Project Knowledge
+
+## Overview
+PoC for Realtime Agent + Supervisor + Scoring architecture.
+Scenario: convince a lazy Czech guy (Pepík) to eat healthy and work out.
+
+## Links
+- **Repo:** https://github.com/ubohub-bot/ai-convince-demo
+- **Live:** https://ai-convince-demo.vercel.app
+- **Admin:** https://ai-convince-demo.vercel.app/admin
+- **Local path:** /tmp/ai-convince-demo
+
+## Architecture
+Three models working together:
+1. **Realtime** (gpt-4o-realtime) — plays persona, Czech voice via WebRTC
+2. **Supervisor** (gpt-4.1) — evaluates + steers persona via state injection
+3. **Scoring** (gpt-4.1) — post-conversation evaluation
+
+Key pattern: prompt set ONCE, state updates via `conversation.item.create` (not session.update).
+Supervisor is client-side (2s debounce, 5s min interval), not a tool call.
+Version: 0.3.0
+
+## Convex
+- Project: ai-convince-demo (hercklub team)
+- Dev deployment: colorless-moose-743
+- Prod deployment: fast-poodle-172
+- Schema: `sessions` table (by_user + by_outcome indexes)
+- Sessions store: transcript, moodHistory, score, debugEvents, endTrigger
+- Deploy: `npx convex deploy --cmd "npm run build" --yes`
+
+## Vercel
+- Project: ai-convince-demo (lubos-projects-62fc269a)
+- Env vars: OPENAI_API_KEY, NEXT_PUBLIC_CONVEX_URL
+- Deploy: `vercel deploy --prod` (manual, bot can't connect GitHub)
+
+## Character Design
+- Pepík: 42yo programmer, grounded cartoony (Homer Simpson but Czech and real)
+- 3-phase arc: OBRANA (deflect) → TRHLINA (crack) → ROZHODNUTÍ (decide)
+- Max 10 exchanges (soft limit at 8 if stagnating), 3-5 min conversations
+- Weak spot: can't play with his kids, secretly ashamed
+- Czech filler words: "no...", "hele...", "ježiš...", "pff..."
+- Sample phrases for every situation type
+- Outcome-specific farewells: positive when converted, dismissive when rejected/walking away
+
+## Prompt Engineering Notes
+- Structured sections: Role → Personality → Speech → Flow → Rules → Tools
+- Bullets > paragraphs (realtime model follows bullets better)
+- Sample phrases are KING — model closely mimics style
+- `language: 'cs'` on input_audio_transcription or it garbles Czech
+- ALL CAPS for critical rules
+- Variety rule prevents robotic loops
+- Filler words make Czech speech dramatically more natural
+
+## Conversation End Flow
+Three paths to ending:
+1. **Model calls `end_conversation`** — farewell is part of the same response, 5s audio buffer before disconnect
+2. **Supervisor says `shouldEnd`** — state injection with 🔴 UKONČI ROZHOVOR + `response.create` forces model to respond immediately with farewell, then model calls `end_conversation`
+3. **Disconnect/timeout** — safety net, 15s timeout if model ignores supervisor end instruction
+
+Key learnings:
+- Realtime model generates speech + function calls in the same response
+- `response.done` fires when text/generation is complete, NOT when audio finishes playing
+- Audio playback lags 3-5s behind text generation via WebRTC
+- State injection (`conversation.item.create`) is passive — model only sees it on next response
+- Must call `response.create` after injection to force immediate model response
+- Don't `sendFunctionResult` after `end_conversation` — farewell already in current response, sending result triggers unwanted second response
+
+## Debug & Admin
+- Admin dashboard: `/admin` — session history per user
+- Each session stores `debugEvents` array (supervisor evals, state injections, function calls)
+- `endTrigger` field shows what ended the session: `supervisor:gave_up`, `end_conversation:converted`, `disconnect`, etc.
+- Debug events panel in admin is collapsible, color-coded by event type
+
+## Decisions & History
+- 2026-02-02: Project created, all phases built in one session
+- 2026-02-02: Fixed conversation ending — supervisor was killing sessions without farewell, now routes through model
+- Started as architecture proof for bat-ai-voice, became standalone demo
+- Chose Convex over Vercel KV for real-time queries + future extensibility
+- Bot account (ubohub-bot) owns repo — can't create under hercklub org
+- OpenAI lazy init needed for Vercel build (crashes without API key at build time)
+
+## What's Next / Ideas
+- More personas (different resistance types, different goals)
+- Voice experimentation (try ballad, verse voices)
+- Mobile responsive polish
+- Text mode for fast prompt iteration without voice
+- Apply learnings to bat-ai-voice (BAT/GLO sales training)
