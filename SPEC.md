@@ -49,6 +49,7 @@ interface BATPersona {
     glo: number      // 0-10
     velo: number     // 0-10
     vuse: number     // 0-10
+    veo: number      // 0-10 (tobacco-free heated sticks)
   }
   flavorPreference: 'tobacco' | 'menthol' | 'fruit' | 'none'
   priceImportance: 'low' | 'medium' | 'high'
@@ -204,6 +205,16 @@ interface ProductVariant {
 | Specs | ~275 potažení/cartridge, 6/12/18 mg/ml |
 | Variants | Tobacco (Golden, Rich), Menthol (Peppermint, Crisp Mint), Fruit (Mango, Berry, Watermelon) |
 | Price | Starter kit 399 Kč, cartridge 119 Kč/2ks |
+
+#### VEO (Tobacco-Free Heated Sticks)
+| Attribute | Value |
+|-----------|-------|
+| Tagline | "Nikotin bez tabáku" |
+| Type | Non-tobacco heated sticks pro glo™ zařízení |
+| Key Features | Rooibos čajové listy + nikotin. Žádný tabák. Obchází zákazy tabákových příchutí. |
+| Appeal | Biohacking angle — čistý nikotin bez tabákových vedlejších produktů |
+| Launched | Czech Republic first (2023), pak další EU trhy |
+| Note | Ideální pro zákazníky typu Adam — "clean nicotine" mindset |
 
 ### Usage in System
 
@@ -496,6 +507,7 @@ const adamBerg: BATPersona = {
     glo: 6,    // Zkoušel starší verzi, negativní dojem
     velo: 7,   // Používá v letadle a na poradách
     vuse: 5,   // Respektuje jako gadget, bojí se že vypadá jako flétna
+    veo: 3,    // Novinka, fascinuje ho koncept "bez tabáku"
   },
   
   flavorPreference: 'tobacco',
@@ -617,6 +629,7 @@ Jsi Adam Berg, 35 let, Senior Associate v mezinárodní advokátní kanceláři 
       glo: "Zkoušel starší verzi u známého. Dojem: 'Levný plast, chuť jako mokrá sláma.' Potřebuje vidět Hyper Pro aby změnil názor.",
       vuse: "Respektuje jako tech gadget. Líbí se mu že je 'clean'. Bojí se že vypadá jako flétna.",
       velo: "POUŽÍVÁ — v letadle (Business Class) a na dlouhých poradách. Bere jako 'lék na absťák', ne požitek.",
+      veo: "Novinka. Koncept 'bez tabáku' (Rooibos + nikotin) ho fascinuje jako biohackerský trend. Nikotin bez vedlejších produktů = win-win.",
     },
     
     conversionSigns: [
@@ -640,6 +653,7 @@ Jsi Adam Berg, 35 let, Senior Associate v mezinárodní advokátní kanceláři 
 | GLO | Negative — "levný plast, mokrá sláma" | Show Hyper Pro premium design |
 | VUSE | Curious but worried "vypadá jako flétna" | Emphasize discreet design |
 | VELO | **USES IT** — planes, long meetings | Build on positive experience |
+| VEO | Fascinated — "biohacking, no tobacco" | Rooibos + nikotin = clean win |
 
 ---
 
