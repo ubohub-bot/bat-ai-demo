@@ -1,9 +1,8 @@
-# bat-ai-demo — Project Knowledge
+# ai-convince-demo — Project Knowledge
 
 ## Overview
-AI sales training demo for BAT (British American Tobacco).
-User (hosteska) practices pitching GLO/VELO/VUSE to AI customer personas.
-Architecture: Realtime + Supervisor + Scoring (three-model pattern).
+PoC for Realtime Agent + Supervisor + Scoring architecture.
+Scenario: convince a lazy Czech guy (Pepík) to eat healthy and work out.
 
 ## Links
 - **Repo:** https://github.com/ubohub-bot/ai-convince-demo
@@ -80,45 +79,9 @@ Key learnings:
 - Bot account (ubohub-bot) owns repo — can't create under hercklub org
 - OpenAI lazy init needed for Vercel build (crashes without API key at build time)
 
-## Prompt Structure (2026-02-09)
-
-New consolidated prompts in `src/prompts/`:
-
-```
-src/prompts/
-├── index.ts              # Single import
-├── persona.prompt.ts     # Adam Berg persona (edit this!)
-├── supervisor.prompt.ts  # Evaluates + guides
-└── scoring.prompt.ts     # End-of-session report
-```
-
-### OpenAI Realtime Best Practices Applied
-
-**Structure:**
-- Role & Identity → Personality & Tone → Speech Style → Sample Phrases → Rules
-- Bullets > paragraphs (model follows better)
-- Sample phrases are KING (model closely mimics)
-- CAPS for critical rules
-- Variety rule prevents robotic loops
-
-**Key Additions:**
-- Filler words with timing guidance ("Hmm..." for thinking, "*pauza*" for weighing)
-- Tool preambles (say farewell BEFORE calling end_conversation)
-- Unclear audio handling ("Promiňte, to jsem neslyšel?")
-- Pacing section ("Deliver fast but not rushed")
-- Language pinning (VÝHRADNĚ česky)
-
-**Supervisor Slimmed:**
-- Doesn't duplicate full persona anymore
-- Just references what it needs: identity, weak points, BAT experience
-- State injection format simplified
-
-**Scoring Isolated:**
-- Pure prompt function + helpers
-- Weights/forbidden words exported for easy tuning
-
 ## What's Next / Ideas
-- Wire new prompts into existing files (replace old scattered prompts)
-- Test Adam conversation with new structure
-- Add more personas (different resistance types)
+- More personas (different resistance types, different goals)
+- Voice experimentation (try ballad, verse voices)
+- Mobile responsive polish
 - Text mode for fast prompt iteration without voice
+- Apply learnings to bat-ai-voice (BAT/GLO sales training)

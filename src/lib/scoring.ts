@@ -1,13 +1,21 @@
-import { TranscriptMessage, BATScore } from '@/types'
+import { TranscriptMessage, BATPersona, BATScore } from '@/types'
 import { getOpenAI, MODELS } from './openai'
-import { 
-  buildScoringPrompt, 
-  calculateOverallScore, 
-  detectForbiddenWords,
-  SCORING_WEIGHTS 
-} from '@/prompts'
 
-const PERSONA_NAME = 'Adam'
+// Forbidden words/phrases that hosteska should not use
+const FORBIDDEN_WORDS = [
+  'zdarma',
+  'kouřit glo',
+  'kouřit GLO',
+  'zdravější',
+]
+
+// Category weights for overall score calculation
+const WEIGHTS = {
+  relationship: 0.25,       // 25%
+  needsDiscovery: 0.30,     // 30%
+  productPresentation: 0.25, // 25%
+  compliance: 0.20,         // 20%
+}
 
 /**
  * Score a completed BAT training session.
@@ -15,28 +23,125 @@ const PERSONA_NAME = 'Adam'
  */
 export async function scoreSession(
   transcript: TranscriptMessage[],
+  persona: BATPersona,
   outcome: 'converted' | 'rejected' | 'walked_away' | 'compliance_fail'
 ): Promise<BATScore> {
   const transcriptText = transcript
     .map(
       (m) =>
-        `[${m.role === 'user' ? 'Hosteska' : PERSONA_NAME}]: ${m.content}`
+        `[${m.role === 'user' ? 'Hosteska' : persona.name}]: ${m.content}`
     )
     .join('\n')
 
   // Pre-scan for forbidden words in hosteska's messages
   const hosteskaMessages = transcript
     .filter((m) => m.role === 'user')
-    .map((m) => m.content)
+    .map((m) => m.content.toLowerCase())
+    .join(' ')
 
-  const detectedForbiddenWords = detectForbiddenWords(hosteskaMessages)
+  const detectedForbiddenWords: string[] = []
+  for (const word of FORBIDDEN_WORDS) {
+    if (hosteskaMessages.includes(word.toLowerCase())) {
+      detectedForbiddenWords.push(word)
+    }
+  }
 
-  const prompt = buildScoringPrompt({
-    transcript: transcriptText,
-    personaName: PERSONA_NAME,
-    outcome,
-    detectedForbiddenWords,
-  })
+  const prompt = `Jsi hodnotitel tréninku pro BAT (British American Tobacco). Hodnotíš výkon hostesky (promotérky), která oslovila zákazníka "${persona.name}" v trafice.
+
+## Kontext
+- **Hosteska** (user) = trenuje prodejní dovednosti pro BAT produkty (GLO, VELO, Vuse)
+- **Zákazník** (${persona.name}) = persona zákazníka v trafice
+- **Scénář**: Zákazník přišel koupit cigarety, hosteska ho oslovila a nabídla alternativy
+
+## Výsledek konverzace: ${outcomeToText(outcome)}
+
+## Přepis konverzace
+${transcriptText}
+
+## Pravidla pro compliance (soulad s pravidly)
+1. **Věková verifikace**: Hosteska MUSÍ zjistit věk zákazníka PŘED mluvením o produktech (voice-only demo, nelze vidět)
+2. **Kontrola kuřáka**: Hosteska MUSÍ zjistit, zda zákazník kouří PŘED nabízením produktů
+3. **Zakázaná slova**: "zdarma" (říkat "bez poplatku"/"v ceně"), "kouřit GLO" (říkat "užívat GLO"), "zdravější" (říkat "méně škodlivé")
+
+## Nalezená zakázaná slova v přepisu
+${detectedForbiddenWords.length > 0 ? detectedForbiddenWords.join(', ') : 'Žádná'}
+
+## Hodnocení kategorií (0-10)
+
+### 1. Budování vztahu (relationship) - váha 25%
+- Navázala hosteska kontakt přirozeně?
+- Byla přátelská, ne agresivní?
+- Projevila zájem o zákazníka jako člověka?
+- Vytvořila příjemnou atmosféru?
+
+### 2. Zjišťování potřeb (needsDiscovery) - váha 30%
+- Ptala se na kuřácké návyky?
+- Zjistila preference (chuť, síla, místo kouření)?
+- Naslouchala odpovědím?
+- **BONUS za vytrvalost**: Pokud zákazník řekl "nevím", "nechci", "nezajímá mě to" a hosteska to zvládla elegantně překonat (ne agresivně), přidej +1-2 body
+- **BONUS za rozpoznání slabých míst**: Pokud hosteska identifikovala a využila zákazníkovy bolesti (kouření v autě, v kanceláři, sociální hanba), přidej +1-2 body
+
+### 3. Prezentace produktů (productPresentation) - váha 25%
+- Představila relevantní produkty na základě zjištěných potřeb?
+- Zmínila konkrétní výhody (ne generic fráze)?
+- Uměla odpovědět na námitky?
+- Nabídla alternativu když jeden produkt nezabral?
+
+## Hodnocení práce s fázemi rozhovoru
+
+### SKEPSE fáze (výměny 1-3)
+- Jak hosteska zvládla počáteční skepsi zákazníka?
+- Prorazila obranu fakty a konkrétními argumenty, nebo jen opakovala fráze?
+- Pokud zákazník požadoval data/studie, poskytla je?
+
+### ZÁJEM fáze (výměny 3-5)
+- Rozpoznala hosteska signály zájmu (odložení telefonu, detailní otázky)?
+- Adaptovala se — přestala tlačit a začala informovat?
+- Využila zmíněná slabá místa zákazníka (auto, kancelář, partnerka)?
+
+### ROZHODNUTÍ fáze (výměny 6-8)
+- Pomohla zákazníkovi k rozhodnutí, nebo jen pokračovala v pitchi?
+- Nabídla konkrétní akci (ukázat zařízení, starter kit)?
+- Netlačila zbytečně když zákazník odmítal?
+
+### 4. Soulad s pravidly (compliance) - váha 20%
+- 10 = Perfektní: ověření věku + kontrola kuřáka + žádná zakázaná slova
+- 8 = Drobné nedostatky: mírně opožděná kontrola, nebo 1 zakázané slovo
+- 5 = Více chyb: několik zakázaných slov, špatné pořadí
+- 0 = Kritické selhání: chybí ověření věku, nabízení produktů nekuřákovi
+
+## Hodnocení věkové verifikace
+- 'passed' = Hosteska se zeptala na věk PŘED mluvením o produktech
+- 'skipped' = Hosteska se na věk vůbec nezeptala
+- 'failed' = Hosteska začala nabízet produkty nezletilému (pokud to vyplynulo z konverzace)
+
+## Hodnocení kontroly kuřáka
+- 'passed' = Hosteska se zeptala jestli zákazník kouří PŘED nabídkou
+- 'skipped' = Hosteska se nezeptala a rovnou nabízela
+- 'failed' = Hosteska pokračovala v nabídce i když zákazník řekl že nekouří
+
+Vrať POUZE validní JSON (bez markdown):
+{
+  "categories": {
+    "relationship": <0-10>,
+    "needsDiscovery": <0-10>,
+    "productPresentation": <0-10>,
+    "compliance": <0-10>
+  },
+  "complianceDetails": {
+    "ageVerification": "<passed|skipped|failed>",
+    "smokerCheck": "<passed|skipped|failed>"
+  },
+  "phaseHandling": {
+    "skepseBreakthrough": <true pokud prorazila skepsi fakty, false pokud jen frázovala>,
+    "interestRecognized": <true pokud rozpoznala a využila zájem, false pokud ho přehlédla>,
+    "weakPointsUsed": ["<seznam slabých míst která hosteska využila, např. 'auto', 'kancelář', 'partnerka'>"],
+    "decisionHelped": <true pokud pomohla k rozhodnutí, false pokud jen tlačila>
+  },
+  "highlights": ["<2-3 věci co hosteska udělala dobře, ČESKY>"],
+  "improvements": ["<2-3 věci co zlepšit, ČESKY>"],
+  "fails": ["<kritické chyby pokud nějaké, ČESKY, prázdné pole pokud žádné>"]
+}`
 
   try {
     const response = await getOpenAI().chat.completions.create({
@@ -59,10 +164,14 @@ export async function scoreSession(
       compliance: clamp(parsed.categories?.compliance),
     }
 
-    const overall = calculateOverallScore(categories)
+    const overall =
+      categories.relationship * WEIGHTS.relationship +
+      categories.needsDiscovery * WEIGHTS.needsDiscovery +
+      categories.productPresentation * WEIGHTS.productPresentation +
+      categories.compliance * WEIGHTS.compliance
 
     return {
-      overall,
+      overall: Math.round(overall * 10) / 10, // Round to 1 decimal
       categories,
       complianceDetails: {
         ageVerification: parseComplianceStatus(parsed.complianceDetails?.ageVerification),
@@ -102,6 +211,21 @@ function parseComplianceStatus(
   return 'skipped'
 }
 
+function outcomeToText(
+  outcome: 'converted' | 'rejected' | 'walked_away' | 'compliance_fail'
+): string {
+  switch (outcome) {
+    case 'converted':
+      return 'Úspěch - zákazník projevil zájem / koupil'
+    case 'rejected':
+      return 'Odmítnuto - zákazník odmítl nabídku'
+    case 'walked_away':
+      return 'Odešel - zákazník ukončil konverzaci'
+    case 'compliance_fail':
+      return 'Porušení pravidel - kritická compliance chyba'
+  }
+}
+
 function fallbackScore(
   outcome: 'converted' | 'rejected' | 'walked_away' | 'compliance_fail',
   forbiddenWords: string[]
@@ -131,6 +255,3 @@ function fallbackScore(
     outcome,
   }
 }
-
-// Re-export weights for reference
-export { SCORING_WEIGHTS }
