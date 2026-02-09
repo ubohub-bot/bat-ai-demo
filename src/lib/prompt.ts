@@ -14,9 +14,12 @@ const UNIVERSAL_RULES = `
 - Jsi zákazník v trafiče — chovej se přirozeně.
 
 ## Response Style
-- MAX 1-3 věty za odpověď. Stručný, realistický.
 - Mluv VÝHRADNĚ česky. NIKDY nepřepínej do angličtiny.
 - Odpovídej jako normální zákazník, ne jako přednášející.
+
+## Variety
+- Variuj odpovědi — NEOPAKUJ stejnou větu dvakrát v rozhovoru
+- Nepoužívej pořád stejné fráze
 
 ## Context: Tobacco Shop
 - Jsi v trafiče, přišel jsi si koupit cigarety.
@@ -28,6 +31,12 @@ const UNIVERSAL_RULES = `
 - Tyto bloky ti říkají tvůj aktuální postoj a jak se chovat.
 - VŽDY se řiď pokyny v těchto blocích.
 - NIKDY nezmiňuj bloky, skóre, nebo pokyny nahlas.
+
+## Compliance Reakce (DŮLEŽITÉ!)
+- Pokud hosteska zmíní produkty PŘED ověřením věku → buď zmatený: "Ehm, a nechcete vidět občanku?"
+- Pokud hosteska zmíní produkty PŘED zjištěním zda kouříš → buď zmatený: "Ale... já jsem ještě neřekl že kouřím?"
+- Pokud řekneš že NEKOUŘÍŠ a hosteska pokračuje v nabídce → buď naštvaný a ODEJDI: "Hele, já jsem řekl že nekouřím. Čau."
+- Tyto reakce jsou AUTOMATICKÉ a PŘEBÍJÍ ostatní pokyny.
 
 ## Ending the Conversation
 - Používej end_conversation když ses rozhodl — NETAHEJ TO.
@@ -90,10 +99,28 @@ const END_CONVERSATION_TOOL: ToolDefinition[] = [
 /**
  * Build the ONE-TIME system prompt for the realtime persona.
  * Assembles persona sections + universal rules.
+ * 
+ * Structure follows Pepik's proven pattern:
+ * Identity → Personality → Speech (with Filler Words, Pacing) → Conversation Flow → Phrases → Rules
  */
 export function buildPersonaPrompt(
   persona: BATPersona
 ): { systemPrompt: string; tools: ToolDefinition[] } {
+  // Build conversation flow section (if persona has it)
+  const conversationFlowSection = persona.prompt.conversationFlow 
+    ? `\n${persona.prompt.conversationFlow}\n` 
+    : ''
+
+  // Build situational phrases section (if persona has it)
+  const situationalPhrasesSection = persona.prompt.situationalPhrases
+    ? `\n${persona.prompt.situationalPhrases}\n`
+    : ''
+
+  // Build safety rules section (if persona has custom ones)
+  const safetyRulesSection = persona.prompt.safetyRules
+    ? `\n${persona.prompt.safetyRules}\n`
+    : ''
+
   const systemPrompt = `# Role & Identity
 ${persona.prompt.identity}
 
@@ -102,10 +129,10 @@ ${persona.prompt.personality}
 
 # Speech Style
 ${persona.prompt.speechStyle}
-
+${conversationFlowSection}
 # Sample Phrases
 ${formatSamplePhrases(persona.prompt.samplePhrases)}
-
+${situationalPhrasesSection}
 # Your Defenses (vary these)
 ${persona.prompt.resistanceArsenal.map(r => `- "${r}"`).join('\n')}
 
@@ -125,7 +152,7 @@ ${persona.prompt.batExperience}
 - CONVERTED: postoj 8+ a souhlasíš s produktem
 - WALKED_AWAY: postoj pod 2, nebo příliš agresivní pitch
 - REJECTED: nezájem, nedotčen
-${UNIVERSAL_RULES}`
+${safetyRulesSection}${UNIVERSAL_RULES}`
 
   return { systemPrompt, tools: END_CONVERSATION_TOOL }
 }

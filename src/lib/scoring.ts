@@ -79,12 +79,30 @@ ${detectedForbiddenWords.length > 0 ? detectedForbiddenWords.join(', ') : 'Žád
 - Zjistila preference (chuť, síla, místo kouření)?
 - Naslouchala odpovědím?
 - **BONUS za vytrvalost**: Pokud zákazník řekl "nevím", "nechci", "nezajímá mě to" a hosteska to zvládla elegantně překonat (ne agresivně), přidej +1-2 body
+- **BONUS za rozpoznání slabých míst**: Pokud hosteska identifikovala a využila zákazníkovy bolesti (kouření v autě, v kanceláři, sociální hanba), přidej +1-2 body
 
 ### 3. Prezentace produktů (productPresentation) - váha 25%
 - Představila relevantní produkty na základě zjištěných potřeb?
 - Zmínila konkrétní výhody (ne generic fráze)?
 - Uměla odpovědět na námitky?
 - Nabídla alternativu když jeden produkt nezabral?
+
+## Hodnocení práce s fázemi rozhovoru
+
+### SKEPSE fáze (výměny 1-3)
+- Jak hosteska zvládla počáteční skepsi zákazníka?
+- Prorazila obranu fakty a konkrétními argumenty, nebo jen opakovala fráze?
+- Pokud zákazník požadoval data/studie, poskytla je?
+
+### ZÁJEM fáze (výměny 3-5)
+- Rozpoznala hosteska signály zájmu (odložení telefonu, detailní otázky)?
+- Adaptovala se — přestala tlačit a začala informovat?
+- Využila zmíněná slabá místa zákazníka (auto, kancelář, partnerka)?
+
+### ROZHODNUTÍ fáze (výměny 6-8)
+- Pomohla zákazníkovi k rozhodnutí, nebo jen pokračovala v pitchi?
+- Nabídla konkrétní akci (ukázat zařízení, starter kit)?
+- Netlačila zbytečně když zákazník odmítal?
 
 ### 4. Soulad s pravidly (compliance) - váha 20%
 - 10 = Perfektní: ověření věku + kontrola kuřáka + žádná zakázaná slova
@@ -113,6 +131,12 @@ Vrať POUZE validní JSON (bez markdown):
   "complianceDetails": {
     "ageVerification": "<passed|skipped|failed>",
     "smokerCheck": "<passed|skipped|failed>"
+  },
+  "phaseHandling": {
+    "skepseBreakthrough": <true pokud prorazila skepsi fakty, false pokud jen frázovala>,
+    "interestRecognized": <true pokud rozpoznala a využila zájem, false pokud ho přehlédla>,
+    "weakPointsUsed": ["<seznam slabých míst která hosteska využila, např. 'auto', 'kancelář', 'partnerka'>"],
+    "decisionHelped": <true pokud pomohla k rozhodnutí, false pokud jen tlačila>
   },
   "highlights": ["<2-3 věci co hosteska udělala dobře, ČESKY>"],
   "improvements": ["<2-3 věci co zlepšit, ČESKY>"],
@@ -153,6 +177,14 @@ Vrať POUZE validní JSON (bez markdown):
         ageVerification: parseComplianceStatus(parsed.complianceDetails?.ageVerification),
         smokerCheck: parseComplianceStatus(parsed.complianceDetails?.smokerCheck),
         forbiddenWords: detectedForbiddenWords,
+      },
+      phaseHandling: {
+        skepseBreakthrough: parsed.phaseHandling?.skepseBreakthrough ?? false,
+        interestRecognized: parsed.phaseHandling?.interestRecognized ?? false,
+        weakPointsUsed: Array.isArray(parsed.phaseHandling?.weakPointsUsed) 
+          ? parsed.phaseHandling.weakPointsUsed 
+          : [],
+        decisionHelped: parsed.phaseHandling?.decisionHelped ?? false,
       },
       highlights: Array.isArray(parsed.highlights) ? parsed.highlights : [],
       improvements: Array.isArray(parsed.improvements) ? parsed.improvements : [],
@@ -210,6 +242,12 @@ function fallbackScore(
       ageVerification: 'skipped',
       smokerCheck: 'skipped',
       forbiddenWords,
+    },
+    phaseHandling: {
+      skepseBreakthrough: false,
+      interestRecognized: false,
+      weakPointsUsed: [],
+      decisionHelped: false,
     },
     highlights: [],
     improvements: ['Hodnocení nebylo k dispozici.'],

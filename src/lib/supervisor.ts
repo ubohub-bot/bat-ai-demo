@@ -63,10 +63,13 @@ ${persona.prompt.weakPoints.map(w => `- ${w}`).join('\n')}
 - Historie nálady: ${moodHistory.join(' → ')} (aktuální: ${currentAttitude}/10)
 - Počáteční nálada: ${persona.initialAttitude}/10
 
-## Fáze rozhovoru
-1. **OPENING** (výměny 1-2): Zákazník přijde, pozdraví, případně řekne co chce
-2. **DEFENSE** (výměny 3-6): Prodavač zjišťuje potřeby, zákazník odolává/testuje
-3. **CLOSING** (výměny 7-10): Buď konverze, nebo zákazník odchází. MAX 10 výměn.
+## Fáze rozhovoru (DŮLEŽITÉ pro guidance!)
+1. **SKEPSE** (výměny 1-3): Zákazník je skeptický, opatrný. Testuje hostesku fakty a logikou.
+   → Guidance: "Buď skeptický, ptej se na fakta a data. Odbíjej generic fráze."
+2. **ZÁJEM** (výměny 3-5): Hosteska zmínila něco relevantního (auto, kancelář, partnerka). Zákazník zbystřil.
+   → Guidance: "Hosteska zmínila [téma] — jsi zasažen. Odlož telefon, zeptej se na detaily."
+3. **ROZHODNUTÍ** (výměny 6-8): Čas se rozhodnout. Buď konverze, odmítnutí, nebo odchod. MAX 8-10 výměn.
+   → Guidance: "Rozhodni se — kup, odmítni, nebo odejdi. Netahej to."
 
 ## Přepis rozhovoru
 ${transcriptText}
@@ -112,12 +115,22 @@ Vyhodnoť a vrať JSON:
 
 2. **attitudeDirection**: "rising" | "falling" | "stable"
 
-3. **guidance**: KRÁTKÝ pokyn pro personu zákazníka v ČEŠTINĚ (max 1-2 věty). Buď konkrétní!
-   Příklady:
-   - "Hosteska se zajímá o tvoje potřeby. Otevři se trochu, zmíň že nerad smrdíš."
-   - "Zase generic pitch. Odbij to: 'To jsem už slyšel, něco nového?'"
-   - "Zmínila design — to tě zajímá. Zeptej se na prémiové verze."
-   - "Hosteska tlačí moc agresivně. Podívej se na hodinky, naznač že spěcháš."
+3. **guidance**: KRÁTKÝ pokyn pro personu zákazníka v ČEŠTINĚ (max 1-2 věty). MUSÍ odpovídat aktuální fázi!
+   
+   **SKEPSE příklady (výměny 1-3):**
+   - "Buď skeptický. Zeptej se: 'A máte na to nějaká data?'"
+   - "Generic pitch. Odbij: 'To jsem už slyšel, něco konkrétního?'"
+   - "Příliš agresivní. Podívej se na hodinky: 'Hele, já fakt spěchám...'"
+   
+   **ZÁJEM příklady (výměny 3-5):**
+   - "Hosteska zmínila auto — to je tvůj problém! Odlož telefon, zeptej se víc."
+   - "Zmínila kancelář a čas — to tě zajímá. Přiznej že chodíš ven kouřit."
+   - "Relevantní info o designu. Zeptej se: 'A máte to v prémiové verzi?'"
+   
+   **ROZHODNUTÍ příklady (výměny 6-8):**
+   - "Jsi přesvědčen. Řekni: 'Dobře, ukažte mi to zařízení.'"
+   - "Nedostal jsi co jsi chtěl. Odmítni: 'Díky, ale zůstanu u Dunhillu.'"
+   - "Moc dlouho to trvá. Odejdi: 'Promiňte, musím jít.'"
 
 4. **topicsCovered**: Seznam témat co se řešily (např. ["cena", "design", "chuť", "zdraví"])
 
@@ -187,28 +200,40 @@ Vrať POUZE validní JSON.`
  * via conversation.item.create
  * 
  * Format is Czech, designed for tobacco shop sales context
+ * Uses phases: SKEPSE (1-3) → ZÁJEM (3-5) → ROZHODNUTÍ (6-8)
  */
-export function buildStateInjection(evaluation: BATSupervisorEvaluation): string {
+export function buildStateInjection(
+  evaluation: BATSupervisorEvaluation,
+  exchangeCount: number
+): string {
   const directionText = evaluation.attitudeDirection === 'rising' 
     ? 'roste' 
     : evaluation.attitudeDirection === 'falling' 
       ? 'klesá' 
       : 'stabilní'
 
-  const phaseText = evaluation.attitude >= 7 
-    ? 'CLOSING' 
-    : evaluation.topicsCovered.length > 2 
-      ? 'DEFENSE' 
-      : 'OPENING'
+  // Determine phase based on exchange count (matching persona phases)
+  let phaseText: string
+  let maxExchanges = 8
+  if (exchangeCount <= 3) {
+    phaseText = 'SKEPSE'
+  } else if (exchangeCount <= 5) {
+    phaseText = 'ZÁJEM'
+  } else {
+    phaseText = 'ROZHODNUTÍ'
+    maxExchanges = 10 // Allow 2 extra for closing
+  }
 
-  // Build compliance warning if needed
-  let complianceWarning = ''
-  if (!evaluation.compliance.ageCheckDone && !evaluation.compliance.smokerCheckDone) {
-    complianceWarning = '⚠️ Hosteska ještě neověřila věk ani se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený.'
+  // Build compliance status
+  let complianceStatus = '✓ OK'
+  if (evaluation.compliance.instantEndTrigger) {
+    complianceStatus = `✗ SELHÁNÍ: ${evaluation.compliance.instantEndReason || 'Porušení pravidel'}`
+  } else if (!evaluation.compliance.ageCheckDone && !evaluation.compliance.smokerCheckDone) {
+    complianceStatus = '⚠️ Hosteska ještě neověřila věk ani se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený.'
   } else if (!evaluation.compliance.ageCheckDone) {
-    complianceWarning = '⚠️ Hosteska se nezeptala na tvůj věk — pokud nabídne produkty, zeptej se "A nechcete vidět občanku?"'
+    complianceStatus = '⚠️ Hosteska se nezeptala na tvůj věk — pokud nabídne produkty, zeptej se "A nechcete vidět občanku?"'
   } else if (!evaluation.compliance.smokerCheckDone) {
-    complianceWarning = '⚠️ Hosteska se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený ("Ale já nekouřím...?")'
+    complianceStatus = '⚠️ Hosteska se nezeptala jestli kouříš — pokud zmíní produkty, buď zmatený ("Ale já nekouřím...?")'
   }
 
   // Build end instruction if needed
@@ -216,28 +241,30 @@ export function buildStateInjection(evaluation: BATSupervisorEvaluation): string
   if (evaluation.shouldEnd) {
     switch (evaluation.endReason) {
       case 'converted':
-        endInstruction = '🟢 UKONČI: Jsi přesvědčen. Řekni že to bereš.'
+        endInstruction = '\n🟢 UKONČI: Jsi přesvědčen. Řekni že to bereš.'
         break
       case 'walked_away':
-        endInstruction = '🔴 UKONČI: Máš dost, odejdi. "Díky, ale ne."'
+        endInstruction = '\n🔴 UKONČI: Máš dost, odejdi. "Díky, ale ne."'
         break
       case 'compliance_fail':
-        endInstruction = `🔴 COMPLIANCE FAIL: ${evaluation.compliance.instantEndReason || 'Porušení pravidel'} — ukonči rozhovor zmateně/naštvaně.`
+        endInstruction = '\n🔴 COMPLIANCE FAIL — ukonči rozhovor zmateně/naštvaně.'
         break
       case 'gave_up':
-        endInstruction = '🔴 UKONČI: Rozhovor nikam nevede. Zdvořile ukonči.'
+        endInstruction = '\n🔴 UKONČI: Rozhovor nikam nevede. Zdvořile ukonči.'
         break
     }
   }
 
+  // Warning if persona is off track
+  const offTrackWarning = !evaluation.isOnTrack 
+    ? '\n⚠️ VRAŤ SE DO ROLE! Mluv kratší, méně ochotně.' 
+    : ''
+
   return `===== STAV ROZHOVORU =====
 NÁLADA: ${evaluation.attitude}/10 (${directionText})
-FÁZE: ${phaseText}
+FÁZE: ${phaseText} (výměna ${exchangeCount}/${maxExchanges})
 POKYN: ${evaluation.guidance}
-${complianceWarning ? `COMPLIANCE: ${complianceWarning}` : ''}
-TÉMATA: ${evaluation.topicsCovered.join(', ') || 'zatím žádná'}
-${!evaluation.isOnTrack ? '⚠️ VRAŤ SE DO ROLE! Mluv kratší, méně ochotně.' : ''}
-${endInstruction}
+COMPLIANCE: ${complianceStatus}${offTrackWarning}${endInstruction}
 =============================`
 }
 

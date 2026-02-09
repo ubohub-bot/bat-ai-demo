@@ -31,7 +31,7 @@ export interface BATPersona {
   prompt: {
     identity: string // Who they are, background, lifestyle
     personality: string // Demeanor, tone, reactions
-    speechStyle: string // How they talk, pacing, vocabulary
+    speechStyle: string // How they talk, pacing, filler words, vocabulary
     samplePhrases: {
       greeting: string[]
       objections: string[]
@@ -43,6 +43,10 @@ export interface BATPersona {
     weakPoints: string[] // What might break through (INTERNAL)
     conversionSigns: string[] // How they show they're warming up
     batExperience: string // Their history with BAT products (prose)
+    // New structured sections (optional for backward compat)
+    conversationFlow?: string // 3-phase conversation structure
+    situationalPhrases?: string // Context-specific responses
+    safetyRules?: string // Persona-specific NIKDY rules
   }
 }
 
@@ -67,6 +71,12 @@ export interface BATScore {
     ageVerification: 'passed' | 'skipped' | 'failed'
     smokerCheck: 'passed' | 'skipped' | 'failed'
     forbiddenWords: string[] // list of violations found
+  }
+  phaseHandling: {
+    skepseBreakthrough: boolean // Did hosteska break through skepticism with facts?
+    interestRecognized: boolean // Did hosteska recognize and use interest signals?
+    weakPointsUsed: string[] // Which weak points did hosteska identify and use?
+    decisionHelped: boolean // Did hosteska help customer decide (vs just pushing)?
   }
   highlights: string[] // What went well (Czech)
   improvements: string[] // What to improve (Czech)

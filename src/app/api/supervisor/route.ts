@@ -28,7 +28,9 @@ export async function POST(request: Request) {
       persona
     )
 
-    const stateInjection = buildStateInjection(evaluation)
+    // Count exchanges (assistant turns)
+    const exchangeCount = transcript.filter(m => m.role === 'assistant').length
+    const stateInjection = buildStateInjection(evaluation, exchangeCount)
 
     const response: SupervisorResponse = {
       evaluation,
