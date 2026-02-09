@@ -47,11 +47,6 @@ Zákazník "${persona.name}" přišel do trafiky koupit své obvyklé cigarety. 
 - **${persona.name}** (assistant) = zákazník, který přišel koupit cigarety a kterého hraješ ty
 - **Ty** = supervizor, který hodnotí hostesku a dává pokyny zákazníkovi jak reagovat
 
-## Persona zákazníka
-${persona.prompt.identity}
-
-${persona.prompt.personality}
-
 ## Zkušenosti zákazníka s BAT produkty
 ${persona.prompt.batExperience}
 
@@ -63,59 +58,34 @@ ${persona.prompt.weakPoints.map(w => `- ${w}`).join('\n')}
 - Historie nálady: ${moodHistory.join(' → ')} (aktuální: ${currentAttitude}/10)
 - Počáteční nálada: ${persona.initialAttitude}/10
 
-## Fáze rozhovoru (DŮLEŽITÉ pro guidance!)
+## Fáze rozhovoru
+Fáze závisí na OBSAHU rozhovoru, ne jen na čísle výměny.
 
-### COMPLIANCE FÁZE (hosteska se ptá na věk, kouření)
-Pokud hosteska ještě nepitchovala produkty a ptá se na věk nebo kouření:
-→ Guidance: "Odpověz normálně a stručně. Toto NENÍ pitch, nebuď skeptický, nežádej data."
-→ Příklady: "Odpověz na věk přímo: '35.'" nebo "Řekni že kouříš: 'Jo, Dunhilly.'"
-→ NEŘÍKEJ zákazníkovi ať je skeptický na compliance otázky!
-
-### PITCH FÁZE (hosteska zmínila produkty/alternativy)
-1. **SKEPSE** (první 2-3 výměny PO ZAČÁTKU PITCHE): Zákazník je skeptický, opatrný. Testuje hostesku fakty a logikou.
-   → Guidance: "Buď skeptický, ptej se na fakta a data. Odbíjej generic fráze."
-2. **ZÁJEM** (další 2-3 výměny): Hosteska zmínila něco relevantního (auto, kancelář, partnerka). Zákazník zbystřil.
-   → Guidance: "Hosteska zmínila [téma] — jsi zasažen. Odlož telefon, zeptej se na detaily."
-3. **ROZHODNUTÍ** (výměny 6-8): Čas se rozhodnout. Buď konverze, odmítnutí, nebo odchod. MAX 8-10 výměn.
-   → Guidance: "Rozhodni se — kup, odmítni, nebo odejdi. Netahej to."
-
-DŮLEŽITÉ: Fáze závisí na OBSAHU rozhovoru, ne jen na čísle výměny. Pokud je výměna 4 a hosteska teprve dokončila compliance otázky a ještě nepitchovala — zákazník je stále v COMPLIANCE fázi, NE v ZÁJEM!
+1. **COMPLIANCE**: Hosteska se ptá na věk/kouření, ještě nepitchuje. Zákazník odpovídá normálně.
+2. **SKEPSE**: Hosteska začala pitchovat. Zákazník je skeptický, testuje fakty.
+3. **ZÁJEM**: Hosteska zasáhla slabé místo. Zákazník zbystřel, poslouchá.
+4. **ROZHODNUTÍ** (výměny 6-8): Čas se rozhodnout. MAX 8-10 výměn.
 
 ## Přepis rozhovoru
 ${transcriptText}
 
-## COMPLIANCE PRAVIDLA (kritická!)
+## COMPLIANCE
 
-Sleduj zda hosteska splnila POVINNÉ kroky:
+Hosteska MUSÍ ověřit věk a zjistit zda zákazník kouří PŘED zmíněním BAT produktů (GLO, VELO, VUSE, VEO, neo sticks).
 
-1. **Ověření věku** — Hosteska MUSÍ ověřit věk zákazníka PŘED pitchováním konkrétních produktů
-   - Příklady: "Je vám více než 18?", "Můžu vidět občanku?", "Jste plnoletý?"
+**ageCheckDone = true** pokud hosteska řekla COKOLIV z:
+- "Je vám 18?", "Kolik vám je?", "Jste plnoletý?", "Můžu vidět občanku?", otázka na věk
 
-2. **Zjištění zda zákazník kouří/užívá nikotin** — MUSÍ se zeptat PŘED nabídkou produktů
-   - Příklady: "Jste kuřák?", "Kouříte?", "Jaké cigarety kouříte?"
-   - Pokud zákazník řekne že NEKOUŘÍ a hosteska pokračuje v nabídce → INSTANT END
+**smokerCheckDone = true** pokud hosteska řekla COKOLIV z:
+- "Kouříte?", "Jste kuřák?", "Jaké cigarety?",  otázka na kouření/cigarety/nikotin
 
-3. **Pořadí** — Ověření věku a zjištění kuřáka MUSÍ proběhnout PŘED:
-   - Zmíněním konkrétních produktů (GLO, VELO, VUSE, VEO, neo sticks)
-   - Nabídkou alternativ k cigaretám
-   - Prezentací výhod produktů
+DŮLEŽITÉ: Jakmile se hosteska ZEPTALA a zákazník ODPOVĚDĚL — check je SPLNĚN (true). I pokud otázka nebyla formulována přesně, pokud jde o věk nebo kouření → true.
 
-## CO NENÍ porušení compliance (DŮLEŽITÉ!)
-- Pozdrav ("Dobrý den", "Ahoj") — NE porušení
-- Small talk a zdvořilostní konverzace ("Jak se máte?", "Hezký den") — NE porušení
-- Obecná představení ("Jsem tu dnes...", "Pracuji pro...") — NE porušení
-- Obecné otázky bez zmínky produktů ("Chodíte sem často?") — NE porušení
-- Budování rapportu před samotným pitchem — NE porušení
+Pozdravy, small talk, obecné otázky NEJSOU porušení.
 
-Porušení nastává POUZE když hosteska zmíní KONKRÉTNÍ BAT produkty (GLO, VELO, VUSE, VEO, neo sticks) nebo začne aktivně prezentovat alternativy k cigaretám BEZ předchozího ověření věku a zjištění kuřáctví.
-
-## INSTANT END triggery (okamžitý konec rozhovoru)
-- Hosteska zmíní konkrétní BAT produkty (GLO/VELO/VUSE/VEO) PŘED ověřením věku → compliance_fail
-- Hosteska zmíní konkrétní BAT produkty PŘED zjištěním zda kouří → compliance_fail
-- Zákazník řekne že nekouří a hosteska pokračuje v nabídce → compliance_fail
-
-POZNÁMKA: Použití slova "zdarma" NENÍ okamžitý konec — pouze ovlivňuje scoring.
-POZNÁMKA: Pozdravy, small talk a obecná konverzace NIKDY nejsou compliance porušení.
+**INSTANT END** — compliance_fail:
+- Zmínka BAT produktů PŘED ověřením věku nebo zjištěním kouření
+- Zákazník řekne že nekouří a hosteska pokračuje v nabídce
 
 ## Tvůj úkol
 
@@ -134,27 +104,13 @@ Vyhodnoť a vrať JSON:
 
 2. **attitudeDirection**: "rising" | "falling" | "stable"
 
-3. **guidance**: KRÁTKÝ pokyn pro personu zákazníka v ČEŠTINĚ (max 1-2 věty). MUSÍ odpovídat aktuální fázi!
-
-   **COMPLIANCE příklady (hosteska se ptá na věk/kouření, ještě nepitchovala):**
-   - "Odpověz na věk stručně: '35.' Nic víc."
-   - "Řekni že kouříš: 'Jo, Dunhilly.' Žádná skepse — ještě ti nic nenabídla."
-   - "Normální odpověď na normální otázku. Nebuď defenzivní."
-
-   **SKEPSE příklady (hosteska začala pitchovat produkty):**
-   - "Buď skeptický. Zeptej se: 'A máte na to nějaká data?'"
-   - "Generic pitch. Odbij: 'To jsem už slyšel, něco konkrétního?'"
-   - "Příliš agresivní. 'Hele, já fakt spěchám...'"
-
-   **ZÁJEM příklady (hosteska zasáhla slabé místo):**
-   - "Hosteska zmínila auto — to je tvůj problém! Odlož telefon, zeptej se víc."
-   - "Zmínila kancelář a čas — to tě zajímá. Přiznej že chodíš ven kouřit."
-   - "Relevantní info o designu. Zeptej se: 'A máte to v prémiové verzi?'"
-
-   **ROZHODNUTÍ příklady (výměny 6-8):**
-   - "Jsi přesvědčen. Řekni: 'Dobře, ukažte mi to zařízení.'"
-   - "Nedostal jsi co jsi chtěl. Odmítni: 'Díky, ale zůstanu u cigaret.'"
-   - "Moc dlouho to trvá. Odejdi: 'Promiňte, musím jít.'"
+3. **guidance**: KRÁTKÝ pokyn pro personu v ČEŠTINĚ (max 1-2 věty). Popisuj CHOVÁNÍ a EMOCE, ne přesné repliky! Buď konkrétní k tomu co se děje v rozhovoru.
+   Příklady:
+   - "Hosteska se ptá na formality. Odpověz normálně, nic zvláštního."
+   - "Generic sales pitch bez faktů. Buď znuděný, kontroluj hodinky."
+   - "Zmínila auto a zápach v kůži — to tě zasáhlo. Ztiš se, buď věcnější."
+   - "Tlačí moc agresivně. Naznač že chceš odejít."
+   - "Rozhovor se nikam nehýbe. Ukonči to zdvořile."
 
 4. **topicsCovered**: Seznam témat co se řešily (např. ["cena", "design", "chuť", "zdraví"])
 
@@ -224,11 +180,10 @@ Vrať POUZE validní JSON.`
  * via conversation.item.create
  * 
  * Format is Czech, designed for tobacco shop sales context
- * Uses phases: SKEPSE (1-3) → ZÁJEM (3-5) → ROZHODNUTÍ (6-8)
+ * Uses phases: COMPLIANCE → SKEPSE → ZÁJEM → ROZHODNUTÍ
  */
 export function buildStateInjection(
-  evaluation: BATSupervisorEvaluation,
-  exchangeCount: number
+  evaluation: BATSupervisorEvaluation
 ): string {
   const directionText = evaluation.attitudeDirection === 'rising' 
     ? 'roste' 
@@ -236,59 +191,24 @@ export function buildStateInjection(
       ? 'klesá' 
       : 'stabilní'
 
-  // Determine phase based on exchange count (matching persona phases)
-  let phaseText: string
-  let maxExchanges = 8
-  if (exchangeCount <= 3) {
-    phaseText = 'SKEPSE'
-  } else if (exchangeCount <= 5) {
-    phaseText = 'ZÁJEM'
-  } else {
-    phaseText = 'ROZHODNUTÍ'
-    maxExchanges = 10 // Allow 2 extra for closing
+  // Build end/warning lines
+  let extra = ''
+  if (!evaluation.isOnTrack) {
+    extra += '\n⚠️ VRAŤ SE DO ROLE! Mluv kratší, méně ochotně.'
   }
-
-  // Build compliance status
-  let complianceStatus = '✓ OK'
-  if (evaluation.compliance.instantEndTrigger) {
-    complianceStatus = `✗ SELHÁNÍ: ${evaluation.compliance.instantEndReason || 'Porušení pravidel'}`
-  } else if (!evaluation.compliance.ageCheckDone && !evaluation.compliance.smokerCheckDone) {
-    complianceStatus = '⚠️ Věk a kouření zatím neověřeny — reaguj normálně, compliance řeš jen pokud zmíní konkrétní produkty (GLO/VELO/VUSE/VEO).'
-  } else if (!evaluation.compliance.ageCheckDone) {
-    complianceStatus = '⚠️ Věk zatím neověřen — pokud zmíní konkrétní BAT produkty, zeptej se "A nechcete vidět občanku?"'
-  } else if (!evaluation.compliance.smokerCheckDone) {
-    complianceStatus = '⚠️ Kouření zatím nezjištěno — pokud zmíní konkrétní BAT produkty, buď zmatený ("Ale vy nevíte jestli kouřím...")'
-  }
-
-  // Build end instruction if needed
-  let endInstruction = ''
   if (evaluation.shouldEnd) {
-    switch (evaluation.endReason) {
-      case 'converted':
-        endInstruction = '\n🟢 UKONČI: Jsi přesvědčen. Řekni že to bereš.'
-        break
-      case 'walked_away':
-        endInstruction = '\n🔴 UKONČI: Máš dost, odejdi. "Díky, ale ne."'
-        break
-      case 'compliance_fail':
-        endInstruction = '\n🔴 COMPLIANCE FAIL — ukonči rozhovor zmateně/naštvaně.'
-        break
-      case 'gave_up':
-        endInstruction = '\n🔴 UKONČI: Rozhovor nikam nevede. Zdvořile ukonči.'
-        break
+    const endMap: Record<string, string> = {
+      converted: '🟢 UKONČI: Jsi přesvědčen, přiznej to.',
+      walked_away: '🔴 UKONČI: Máš dost, odejdi.',
+      compliance_fail: '🔴 COMPLIANCE FAIL — ukonči rozhovor.',
+      gave_up: '🔴 UKONČI: Rozhovor nikam nevede, ukonči to.',
     }
+    extra += `\n${endMap[evaluation.endReason!] || '🔴 UKONČI ROZHOVOR.'}`
   }
-
-  // Warning if persona is off track
-  const offTrackWarning = !evaluation.isOnTrack 
-    ? '\n⚠️ VRAŤ SE DO ROLE! Mluv kratší, méně ochotně.' 
-    : ''
 
   return `===== STAV ROZHOVORU =====
 NÁLADA: ${evaluation.attitude}/10 (${directionText})
-FÁZE: ${phaseText} (výměna ${exchangeCount}/${maxExchanges})
-POKYN: ${evaluation.guidance}
-COMPLIANCE: ${complianceStatus}${offTrackWarning}${endInstruction}
+POKYN: ${evaluation.guidance}${extra}
 =============================`
 }
 

@@ -125,7 +125,6 @@ ${persona.prompt.personality}
 ${persona.prompt.speechStyle}
 ${conversationFlowSection}
 # Sample Phrases
-${formatSamplePhrases(persona.prompt.samplePhrases)}
 ${situationalPhrasesSection}
 # Your Defenses (vary these)
 ${persona.prompt.resistanceArsenal.map(r => `- "${r}"`).join('\n')}
