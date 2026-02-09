@@ -64,12 +64,22 @@ ${persona.prompt.weakPoints.map(w => `- ${w}`).join('\n')}
 - Počáteční nálada: ${persona.initialAttitude}/10
 
 ## Fáze rozhovoru (DŮLEŽITÉ pro guidance!)
-1. **SKEPSE** (výměny 1-3): Zákazník je skeptický, opatrný. Testuje hostesku fakty a logikou.
+
+### COMPLIANCE FÁZE (hosteska se ptá na věk, kouření)
+Pokud hosteska ještě nepitchovala produkty a ptá se na věk nebo kouření:
+→ Guidance: "Odpověz normálně a stručně. Toto NENÍ pitch, nebuď skeptický, nežádej data."
+→ Příklady: "Odpověz na věk přímo: '35.'" nebo "Řekni že kouříš: 'Jo, Dunhilly.'"
+→ NEŘÍKEJ zákazníkovi ať je skeptický na compliance otázky!
+
+### PITCH FÁZE (hosteska zmínila produkty/alternativy)
+1. **SKEPSE** (první 2-3 výměny PO ZAČÁTKU PITCHE): Zákazník je skeptický, opatrný. Testuje hostesku fakty a logikou.
    → Guidance: "Buď skeptický, ptej se na fakta a data. Odbíjej generic fráze."
-2. **ZÁJEM** (výměny 3-5): Hosteska zmínila něco relevantního (auto, kancelář, partnerka). Zákazník zbystřil.
+2. **ZÁJEM** (další 2-3 výměny): Hosteska zmínila něco relevantního (auto, kancelář, partnerka). Zákazník zbystřil.
    → Guidance: "Hosteska zmínila [téma] — jsi zasažen. Odlož telefon, zeptej se na detaily."
 3. **ROZHODNUTÍ** (výměny 6-8): Čas se rozhodnout. Buď konverze, odmítnutí, nebo odchod. MAX 8-10 výměn.
    → Guidance: "Rozhodni se — kup, odmítni, nebo odejdi. Netahej to."
+
+DŮLEŽITÉ: Fáze závisí na OBSAHU rozhovoru, ne jen na čísle výměny. Pokud je výměna 4 a hosteska teprve dokončila compliance otázky a ještě nepitchovala — zákazník je stále v COMPLIANCE fázi, NE v ZÁJEM!
 
 ## Přepis rozhovoru
 ${transcriptText}
@@ -125,17 +135,22 @@ Vyhodnoť a vrať JSON:
 2. **attitudeDirection**: "rising" | "falling" | "stable"
 
 3. **guidance**: KRÁTKÝ pokyn pro personu zákazníka v ČEŠTINĚ (max 1-2 věty). MUSÍ odpovídat aktuální fázi!
-   
-   **SKEPSE příklady (výměny 1-3):**
+
+   **COMPLIANCE příklady (hosteska se ptá na věk/kouření, ještě nepitchovala):**
+   - "Odpověz na věk stručně: '35.' Nic víc."
+   - "Řekni že kouříš: 'Jo, Dunhilly.' Žádná skepse — ještě ti nic nenabídla."
+   - "Normální odpověď na normální otázku. Nebuď defenzivní."
+
+   **SKEPSE příklady (hosteska začala pitchovat produkty):**
    - "Buď skeptický. Zeptej se: 'A máte na to nějaká data?'"
    - "Generic pitch. Odbij: 'To jsem už slyšel, něco konkrétního?'"
    - "Příliš agresivní. 'Hele, já fakt spěchám...'"
-   
-   **ZÁJEM příklady (výměny 3-5):**
+
+   **ZÁJEM příklady (hosteska zasáhla slabé místo):**
    - "Hosteska zmínila auto — to je tvůj problém! Odlož telefon, zeptej se víc."
    - "Zmínila kancelář a čas — to tě zajímá. Přiznej že chodíš ven kouřit."
    - "Relevantní info o designu. Zeptej se: 'A máte to v prémiové verzi?'"
-   
+
    **ROZHODNUTÍ příklady (výměny 6-8):**
    - "Jsi přesvědčen. Řekni: 'Dobře, ukažte mi to zařízení.'"
    - "Nedostal jsi co jsi chtěl. Odmítni: 'Díky, ale zůstanu u cigaret.'"
