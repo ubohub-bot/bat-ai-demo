@@ -79,6 +79,123 @@ interface BATPersona extends Persona {
 
 ---
 
+## Product Catalog
+
+### Product Schema
+
+```typescript
+interface Product {
+  id: string
+  name: string
+  brand: 'glo' | 'velo' | 'vuse'
+  type: 'heated_tobacco' | 'oral_nicotine' | 'vaping'
+  
+  // Marketing
+  tagline: string
+  description: string
+  
+  // Technical
+  keyFeatures: string[]
+  howItWorks: string
+  specs: Record<string, string>
+  
+  // Comparison
+  vsFMC: string[]           // vs traditional cigarettes
+  vsCompetition: string[]   // vs IQOS, Zyn, etc.
+  
+  // Commercial
+  priceDevice?: string
+  priceConsumables: string
+  
+  // Variants
+  variants: ProductVariant[]
+  
+  // Target
+  idealFor: string[]
+  notFor: string[]
+}
+
+interface ProductVariant {
+  name: string
+  flavor: 'tobacco' | 'menthol' | 'fruit' | 'mint' | 'coffee'
+  nicotineStrength?: 'light' | 'medium' | 'strong' | 'extra_strong'
+  description: string
+}
+```
+
+### Products
+
+#### GLO HYPER X2 (Heated Tobacco)
+| Attribute | Value |
+|-----------|-------|
+| Tagline | "Zahřívá, nespaluje" |
+| Type | Zařízení na zahřívaný tabák |
+| Key Features | HeatBoost™ (260-280°C), 20 sessions/nabití, USB-C |
+| vs Cigarettes | Žádný popel, méně zápachu, tabáková chuť zachována |
+| vs IQOS | Vyšší teplota = plnější chuť, delší baterie, HeatBoost mode |
+| Price | Zařízení 1490 Kč, neo™ sticks 129 Kč/20ks |
+
+#### neo™ Sticks (Consumables for GLO)
+| Attribute | Value |
+|-----------|-------|
+| Type | Tabákové náplně pro glo™ |
+| Variants | Tobacco (Brilliant, True, Dark), Mint (Fresh, Polar, Ice Click), Fruit (Berry, Tropic) |
+| Price | 129 Kč / 20 ks |
+
+#### VELO (Oral Nicotine Pouches)
+| Attribute | Value |
+|-----------|-------|
+| Tagline | "Nikotin bez kouře, bez tabáku" |
+| Type | Nikotinové sáčky (bez tabáku) |
+| Key Features | 100% diskrétní, lze použít kdekoliv, 20-30 min účinek |
+| Strengths | 4 / 6 / 10 / 17 mg |
+| Variants | Mint (Mighty, Cool, Polar, Easy), Fruit (Berry, Tropic, Ruby), Coffee |
+| Price | 99-129 Kč / 20 ks |
+| Ideal For | Kdo nemůže kouřit v práci/doma, cestující, diskrétní alternativa |
+
+#### Vuse ePod 2 (Vaping)
+| Attribute | Value |
+|-----------|-------|
+| Tagline | "Vapování nové generace" |
+| Type | E-cigareta s uzavřeným systémem |
+| Key Features | Předplněné cartridge, magnetické, automatický tah, USB-C |
+| Specs | ~275 potažení/cartridge, 6/12/18 mg/ml |
+| Variants | Tobacco (Golden, Rich), Menthol (Peppermint, Crisp Mint), Fruit (Mango, Berry, Watermelon) |
+| Price | Starter kit 399 Kč, cartridge 119 Kč/2ks |
+
+### Usage in System
+
+| Component | Product Knowledge Level |
+|-----------|------------------------|
+| **Supervisor** | Basic awareness only (what customer knows) |
+| **Scoring** | Full catalog (evaluate salesman's product knowledge) |
+| **Persona prompt** | Customer's awareness level per product |
+
+### Scoring Helpers
+
+```typescript
+// Get key selling points salesman should mention
+getKeySellingPoints(productId: string): string[]
+
+// Match product to customer profile
+getRecommendedProducts(profile: CustomerProfile): string[]
+
+// Verify salesman's claims are factually correct
+verifyProductClaim(productId: string, claim: string): { valid: boolean; note?: string }
+```
+
+### Product Matching Logic
+
+| Customer Profile | Recommended Products |
+|------------------|---------------------|
+| Smell sensitive / needs discretion | VELO first |
+| FMC smoker, wants ritual | GLO |
+| Competitor HP user (IQOS) | GLO (upgrade pitch) |
+| Lapsed GLO user | GLO (win back) |
+| Prefers fruit flavors | Vuse |
+
+---
+
 ## Conversation Flow
 
 ```
@@ -384,12 +501,16 @@ Mluví rychle. Netrpí zbytečné řeči.`,
 
 ---
 
+## Resolved Questions
+
+1. **Voice selection** — Use current voice (verse)
+2. **Language** — Full Czech
+3. **Products catalog** — Basic for supervisor, full for scoring (see Product Catalog section)
+
 ## Open Questions
 
-1. **Voice selection** — Which OpenAI voices for each persona type?
-2. **Language** — Full Czech or Czech/English hybrid?
-3. **Products catalog** — Do we need detailed product specs in prompts?
-4. **Multiple products** — Should we support scenarios for GLO vs Velo vs Vuse?
+1. **Multiple products** — Should we support scenarios focused on GLO vs Velo vs Vuse?
+2. **Persona priority** — Start with Adam Berg or generic Busy Customer?
 
 ---
 
@@ -397,7 +518,8 @@ Mluví rychle. Netrpí zbytečné řeči.`,
 
 | File | Change |
 |------|--------|
-| `src/types/index.ts` | Add BATPersona, BATScore, ComplianceViolation |
+| `src/types/index.ts` | Add BATPersona, BATScore, ComplianceViolation, Product |
+| `src/lib/products.ts` | New: Product catalog (GLO, VELO, VUSE) ✅ |
 | `src/lib/personas/busy.ts` | New: Busy Customer persona |
 | `src/lib/personas/index.ts` | Export busy customer |
 | `src/lib/compliance.ts` | New: Word detection, flow tracking |
