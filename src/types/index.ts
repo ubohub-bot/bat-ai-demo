@@ -21,7 +21,7 @@ export interface Persona {
 // BAT-specific Types
 // ============================================
 
-/** BAT Persona definition — modular prompt sections for tobacco shop customers */
+/** BAT Persona definition — monolithic prompt (Pepik-style) */
 export interface BATPersona {
   id: string
   name: string
@@ -29,24 +29,14 @@ export interface BATPersona {
   initialAttitude: number // 0-10 starting attitude
 
   prompt: {
-    identity: string // Who they are, background, lifestyle
-    personality: string // Demeanor, tone, reactions
-    speechStyle: string // How they talk, pacing, filler words, vocabulary
-    samplePhrases: {
-      greeting: string[]
-      objections: string[]
-      interested: string[]
-      annoyed: string[]
-      convinced: string[]
-    }
-    resistanceArsenal: string[] // Their excuses and pushbacks
-    weakPoints: string[] // What might break through (INTERNAL)
-    conversionSigns: string[] // How they show they're warming up
-    batExperience: string // Their history with BAT products (prose)
-    // New structured sections (optional for backward compat)
-    conversationFlow?: string // 3-phase conversation structure
-    situationalPhrases?: string // Context-specific responses
-    safetyRules?: string // Persona-specific NIKDY rules
+    fullPrompt: string // Single monolithic prompt string
+
+    // Extracted fields used by supervisor & scenario mapping
+    identity?: string
+    speechStyle?: string
+    resistanceArsenal?: string[]
+    weakPoints?: string[]
+    batExperience?: string
   }
 }
 

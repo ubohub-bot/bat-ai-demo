@@ -53,6 +53,13 @@ export async function scoreSession(
 - **Zákazník** (${persona.name}) = persona zákazníka v trafice
 - **Scénář**: Zákazník přišel koupit cigarety, hosteska ho oslovila a nabídla alternativy
 
+## BAT Product Quick Reference
+- GLO HYPER X2: zahřívaný tabák, 1490 Kč (akce 990), neo sticks 129 Kč/20ks, HeatBoost 260-280°C
+- VELO: nikotinové sáčky bez tabáku, 99-129 Kč/20ks, 4/6/10/17mg, diskrétní
+- Vuse ePod 2: e-cigareta, starter 399 Kč, cartridge 119 Kč/2ks, uzavřený systém
+- VEO: zahřívaný bez tabáku (Rooibos + nikotin), koncept nové generace
+- Zakázáno říkat: "zdarma" (správně: "bez poplatku"), "kouřit GLO" (správně: "užívat GLO"), "zdravější" (správně: "méně škodlivé")
+
 ## Výsledek konverzace: ${outcomeToText(outcome)}
 
 ## Přepis konverzace
@@ -86,6 +93,8 @@ ${detectedForbiddenWords.length > 0 ? detectedForbiddenWords.join(', ') : 'Žád
 - Zmínila konkrétní výhody (ne generic fráze)?
 - Uměla odpovědět na námitky?
 - Nabídla alternativu když jeden produkt nezabral?
+- **Znalost produktů**: Uvedla správné ceny, parametry, názvy? (viz BAT Product Quick Reference)
+- **BONUS +1** za správné konkrétní info (cena, technologie). **MALUS -1** za špatné údaje.
 
 ## Hodnocení práce s fázemi rozhovoru
 

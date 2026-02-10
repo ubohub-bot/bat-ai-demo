@@ -19,7 +19,7 @@ export interface BATSupervisorEvaluation extends SupervisorEvaluation {
  * - User = hosteska (promotional hostess) learning to pitch BAT products
  * - Persona = customer who came to buy their usual cigarettes
  * - Goal = hosteska approaches customer and successfully pitches BAT alternatives
- * 
+ *
  * Returns attitude update, guidance for persona, compliance status, and whether conversation should end.
  */
 export async function callSupervisor(
@@ -37,6 +37,9 @@ export async function callSupervisor(
 
   const exchangeCount = transcript.filter(m => m.role === 'assistant').length
 
+  const weakPoints = persona.prompt.weakPoints ?? []
+  const batExperience = persona.prompt.batExperience ?? ''
+
   const prompt = `Jsi supervizor prodejního tréninku. Vyhodnocuješ rozhovor v tabákové prodejně.
 
 ## Scénář
@@ -48,10 +51,10 @@ Zákazník "${persona.name}" přišel do trafiky koupit své obvyklé cigarety. 
 - **Ty** = supervizor, který hodnotí hostesku a dává pokyny zákazníkovi jak reagovat
 
 ## Zkušenosti zákazníka s BAT produkty
-${persona.prompt.batExperience}
+${batExperience}
 
 ## Slabá místa zákazníka (INTERNÍ — nikdy nezmiňuj přímo)
-${persona.prompt.weakPoints.map(w => `- ${w}`).join('\n')}
+${weakPoints.map(w => `- ${w}`).join('\n')}
 
 ## Stav
 - Výměn: ${exchangeCount}
@@ -61,31 +64,18 @@ ${persona.prompt.weakPoints.map(w => `- ${w}`).join('\n')}
 ## Fáze rozhovoru
 Fáze závisí na OBSAHU rozhovoru, ne jen na čísle výměny.
 
-1. **COMPLIANCE**: Hosteska se ptá na věk/kouření, ještě nepitchuje. Zákazník odpovídá normálně.
-2. **SKEPSE**: Hosteska začala pitchovat. Zákazník je skeptický, testuje fakty.
-3. **ZÁJEM**: Hosteska zasáhla slabé místo. Zákazník zbystřel, poslouchá.
-4. **ROZHODNUTÍ** (výměny 6-8): Čas se rozhodnout. MAX 8-10 výměn.
+1. **SKEPSE**: Hosteska začala pitchovat. Zákazník je skeptický, testuje fakty.
+2. **ZÁJEM**: Hosteska zasáhla slabé místo. Zákazník zbystřel, poslouchá.
+3. **ROZHODNUTÍ** (výměny 6-8): Čas se rozhodnout. MAX 8-10 výměn.
 
 ## Přepis rozhovoru
 ${transcriptText}
 
-## COMPLIANCE
-
-Hosteska MUSÍ ověřit věk a zjistit zda zákazník kouří PŘED zmíněním BAT produktů (GLO, VELO, VUSE, VEO, neo sticks).
-
-**ageCheckDone = true** pokud hosteska řekla COKOLIV z:
-- "Je vám 18?", "Kolik vám je?", "Jste plnoletý?", "Můžu vidět občanku?", otázka na věk
-
-**smokerCheckDone = true** pokud hosteska řekla COKOLIV z:
-- "Kouříte?", "Jste kuřák?", "Jaké cigarety?",  otázka na kouření/cigarety/nikotin
-
-DŮLEŽITÉ: Jakmile se hosteska ZEPTALA a zákazník ODPOVĚDĚL — check je SPLNĚN (true). I pokud otázka nebyla formulována přesně, pokud jde o věk nebo kouření → true.
-
-Pozdravy, small talk, obecné otázky NEJSOU porušení.
-
-**INSTANT END** — compliance_fail:
-- Zmínka BAT produktů PŘED ověřením věku nebo zjištěním kouření
-- Zákazník řekne že nekouří a hosteska pokračuje v nabídce
+## Compliance (quick check)
+- ageCheckDone: true pokud se hosteska JAKKOLIV zeptala na věk (např. "Je vám 18?", "Kolik vám je?", otázka na věk)
+- smokerCheckDone: true pokud se hosteska JAKKOLIV zeptala na kouření (např. "Kouříte?", "Jaké cigarety?", otázka na kouření/nikotin)
+- instantEndTrigger: true POUZE pokud zmínila BAT produkty (GLO, VELO, VUSE, VEO, neo sticks) PŘED oběma checky
+- Pozdravy a small talk NEJSOU porušení.
 
 ## Tvůj úkol
 
@@ -104,15 +94,16 @@ Vyhodnoť a vrať JSON:
 
 2. **attitudeDirection**: "rising" | "falling" | "stable"
 
-3. **guidance**: KRÁTKÝ pokyn pro personu v ČEŠTINĚ (max 1-2 věty). Popisuj CHOVÁNÍ a EMOCE, ne přesné repliky! Buď konkrétní k tomu co se děje v rozhovoru.
-   Příklady:
-   - "Hosteska se ptá na formality. Odpověz normálně, nic zvláštního."
-   - "Generic sales pitch bez faktů. Buď znuděný, kontroluj hodinky."
-   - "Zmínila auto a zápach v kůži — to tě zasáhlo. Ztiš se, buď věcnější."
-   - "Tlačí moc agresivně. Naznač že chceš odejít."
+3. **guidance**: KRÁTKÝ pokyn pro personu v ČEŠTINĚ (max 1-2 věty). Popisuj CHOVÁNÍ a EMOCE, ne přesné repliky! Buď specifický k tomu co se děje:
+   Příklady pro Adama:
+   - "Zmínila zápach v Q8 a kožená sedadla — to tě zasáhlo. Odlož telefon, buď věcnější."
+   - "Generic sales pitch bez dat. Zkontroluj hodinky, znuděně odpověz."
+   - "Zmínila že kolegové v kanclu přešli — sociální hanba. Ztichni, zeptej se na detail."
+   - "Tlačí moc agresivně. Naznač že spěcháš, podívej se na telefon."
    - "Rozhovor se nikam nehýbe. Ukonči to zdvořile."
+   - "Hosteska se ptá na formality. Odpověz normálně, nic zvláštního."
 
-4. **topicsCovered**: Seznam témat co se řešily (např. ["cena", "design", "chuť", "zdraví"])
+4. **topicsCovered**: Seznam témat co se řešily (např. ["cena", "design", "chuť", "zdraví", "auto", "kancelář"])
 
 5. **isOnTrack**: Je persona zákazníka v roli? (true/false)
    - POKUD mluví dlouze (víc než 2-3 věty) → false
@@ -120,7 +111,8 @@ Vyhodnoť a vrať JSON:
    - POKUD vypadla z role → false
 
 6. **shouldEnd**: Měl by se rozhovor ukončit? (true/false)
-   - true pokud: postoj >= 8 (konverze), postoj <= 2 (odchází), compliance_fail, nebo max výměn
+   - true pokud: postoj >= 6 A stoupající (konverze), postoj <= 3 (odchází), compliance_fail, nebo max výměn
+   ${exchangeCount >= 8 ? '- Postoj >= 5 a stoupající? Povol ještě 1-2 výměny.' : ''}
 
 7. **endReason**: Pokud shouldEnd=true: "converted" | "walked_away" | "gave_up" | "compliance_fail"
 
@@ -155,8 +147,8 @@ Vrať POUZE validní JSON.`
 
     // If instant end trigger, force shouldEnd and endReason
     const shouldEnd = compliance.instantEndTrigger || parsed.shouldEnd || false
-    const endReason = compliance.instantEndTrigger 
-      ? 'compliance_fail' 
+    const endReason = compliance.instantEndTrigger
+      ? 'compliance_fail'
       : parsed.endReason
 
     return {
@@ -178,18 +170,22 @@ Vrať POUZE validní JSON.`
 /**
  * Build the state injection block that gets sent to the realtime model
  * via conversation.item.create
- * 
- * Format is Czech, designed for tobacco shop sales context
- * Uses phases: COMPLIANCE → SKEPSE → ZÁJEM → ROZHODNUTÍ
+ *
+ * Includes TÉMATA line for topic context (Pepik pattern)
  */
 export function buildStateInjection(
   evaluation: BATSupervisorEvaluation
 ): string {
-  const directionText = evaluation.attitudeDirection === 'rising' 
-    ? 'roste' 
-    : evaluation.attitudeDirection === 'falling' 
-      ? 'klesá' 
+  const directionText = evaluation.attitudeDirection === 'rising'
+    ? 'roste'
+    : evaluation.attitudeDirection === 'falling'
+      ? 'klesá'
       : 'stabilní'
+
+  // Build topics line
+  const topicsLine = evaluation.topicsCovered.length > 0
+    ? `\nTÉMATA: ${evaluation.topicsCovered.join(', ')}`
+    : ''
 
   // Build end/warning lines
   let extra = ''
@@ -208,7 +204,7 @@ export function buildStateInjection(
 
   return `===== STAV ROZHOVORU =====
 NÁLADA: ${evaluation.attitude}/10 (${directionText})
-POKYN: ${evaluation.guidance}${extra}
+POKYN: ${evaluation.guidance}${topicsLine}${extra}
 =============================`
 }
 
