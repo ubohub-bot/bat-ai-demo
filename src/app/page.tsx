@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from 'convex/react'
-import { api } from '../../convex/_generated/api'
 import pkg from '../../package.json'
 import { useSession, DebugEvent } from '@/lib/realtime/useSession'
 import type { PostConversationScore, TranscriptMessage } from '@/types'
@@ -53,7 +51,7 @@ function MessageBubble({ message }: { message: TranscriptMessage }) {
       >
         {!isUser && (
           <span className="text-orange-400 text-xs font-medium block mb-1">
-            Pepík
+            Adam
           </span>
         )}
         {message.content}
@@ -65,18 +63,20 @@ function MessageBubble({ message }: { message: TranscriptMessage }) {
 // ============================================
 // Score Category Bar
 // ============================================
-function ScoreBar({ label, value }: { label: string; value: number }) {
+function ScoreBar({ label, value, max = 10 }: { label: string; value: number; max?: number }) {
+  const pct = (value / max) * 100
+
   return (
     <div className="flex items-center gap-3">
       <span className="text-sm text-zinc-400 w-36 shrink-0">{label}</span>
       <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
         <div
           className="h-full bg-orange-500 rounded-full transition-all duration-500"
-          style={{ width: `${value}%` }}
+          style={{ width: `${pct}%` }}
         />
       </div>
       <span className="text-sm font-mono text-zinc-400 w-10 text-right">
-        {value}
+        {value}/{max}
       </span>
     </div>
   )
@@ -107,132 +107,37 @@ function OutcomeBadge({
 }
 
 // ============================================
-// Leaderboard
-// ============================================
-function Leaderboard({ currentUser }: { currentUser: string }) {
-  const entries = useQuery(api.sessions.leaderboard)
-
-  if (!entries || entries.length === 0) return null
-
-  const medals = ['🥇', '🥈', '🥉']
-
-  const formatDuration = (ms: number) => {
-    const s = Math.round(ms / 1000)
-    return s > 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`
-  }
-
-  const outcomeEmoji: Record<string, string> = {
-    converted: '✅',
-    rejected: '❌',
-    walked_away: '🚪',
-  }
-
-  return (
-    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-      <div className="px-5 py-3 border-b border-zinc-800 flex items-center gap-2">
-        <span className="text-lg">🏆</span>
-        <h3 className="text-sm font-semibold text-zinc-300">Leaderboard</h3>
-        <span className="text-xs text-zinc-600 ml-auto">{entries.length} hráčů</span>
-      </div>
-
-      <div className="divide-y divide-zinc-800/50">
-        {entries.map((entry, i) => {
-          const isMe = entry.userName.toLowerCase() === currentUser.toLowerCase()
-          const convRate = Math.round((entry.conversions / entry.attempts) * 100)
-
-          return (
-            <div
-              key={entry.userName}
-              className={`flex items-center gap-3 px-5 py-3 transition-colors ${
-                isMe ? 'bg-orange-500/5' : 'hover:bg-zinc-800/30'
-              }`}
-            >
-              {/* Rank */}
-              <div className="w-8 text-center shrink-0">
-                {i < 3 ? (
-                  <span className="text-xl">{medals[i]}</span>
-                ) : (
-                  <span className="text-sm text-zinc-600 font-mono">{i + 1}</span>
-                )}
-              </div>
-
-              {/* Name + stats */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium truncate ${isMe ? 'text-orange-400' : 'text-zinc-200'}`}>
-                    {entry.userName}
-                  </span>
-                  {isMe && (
-                    <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full">
-                      ty
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 mt-0.5">
-                  <span className="text-[11px] text-zinc-500">
-                    {entry.attempts}× pokus
-                  </span>
-                  <span className="text-[11px] text-zinc-500">
-                    {convRate}% konverze
-                  </span>
-                  {entry.bestDurationMs > 0 && (
-                    <span className="text-[11px] text-zinc-600">
-                      {formatDuration(entry.bestDurationMs)}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Best score */}
-              <div className="text-right shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-lg font-bold text-orange-500">{entry.bestScore}</span>
-                  <span className="text-xs text-zinc-600">/100</span>
-                </div>
-                <span className="text-[10px] text-zinc-600">
-                  {outcomeEmoji[entry.bestOutcome] || ''} avg {entry.avgScore}
-                </span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ============================================
 // Idle Screen
-// ============================================
+// ============================================ 
 function IdleScreen({ onStart, userName }: { onStart: () => void; userName: string }) {
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
       <div className="text-center max-w-lg w-full">
-        <h1 className="text-4xl font-bold mb-2">🎯 AI Convince</h1>
+        <h1 className="text-4xl font-bold mb-2">BAT Sales Trainer</h1>
         <p className="text-zinc-500 text-sm mb-8">
-          Přesvědč AI postavu, že by měla změnit svůj životní styl.
+          Trénink oslovení zákazníka v trafice. Nabídni mu BAT alternativy.
         </p>
 
         <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800 text-left mb-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center text-2xl">
-              🍺
+              👔
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Pepík, 42 let</h2>
-              <p className="text-zinc-500 text-sm">Programátor · Smažák enthusiast</p>
+              <h2 className="text-lg font-semibold">Adam Berg, 35 let</h2>
+              <p className="text-zinc-500 text-sm">Právník · Perfekcionista · Dunhill</p>
             </div>
           </div>
 
           <p className="text-zinc-400 text-sm mb-2">
-            Karikatura pohodlného chlapa, co miluje smažák a nesnáší pohyb.
-            Sedí celý den u počítače, večer u televize.
+            Skeptický zákazník. Kouří Dunhilly, jezdí Audi Q8, vyžaduje fakta.
+            Neslyší na slogany, ale zasáhne ho sociální tlak a praktické argumenty.
           </p>
 
           <div className="bg-zinc-800/50 rounded-lg p-3 mb-5">
             <p className="text-orange-400 text-xs font-medium mb-1">🎯 Tvůj cíl</p>
             <p className="text-zinc-300 text-sm">
-              Přesvědč ho, aby začal jíst zdravěji a pravidelně cvičit.
+              Ověř věk a kouření, pak nabídni GLO, VELO nebo Vuse. Přesvědč ho fakty, ne frázemi.
             </p>
           </div>
 
@@ -244,11 +149,8 @@ function IdleScreen({ onStart, userName }: { onStart: () => void; userName: stri
           </button>
         </div>
 
-        {/* Leaderboard */}
-        <Leaderboard currentUser={userName} />
-
         <p className="text-zinc-700 text-xs mt-6">
-          Realtime API + Supervisor + Post-conversation Scoring
+          BAT Sales Training Demo
         </p>
       </div>
     </div>
@@ -284,7 +186,7 @@ function ActiveScreen({
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-sm text-zinc-400">Připojeno</span>
           </div>
-          <span className="text-xs text-zinc-600">🍺 Pepík</span>
+          <span className="text-xs text-zinc-600">👔 Adam Berg</span>
         </div>
         <AttitudeMeter value={currentAttitude} />
       </div>
@@ -293,7 +195,7 @@ function ActiveScreen({
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
         {transcript.length === 0 && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-zinc-600 text-sm">Mluvte… Pepík poslouchá 🎧</p>
+            <p className="text-zinc-600 text-sm">Mluvte... Adam poslouchá 🎧</p>
           </div>
         )}
         {transcript.map((msg, i) => (
@@ -426,14 +328,12 @@ function EndedScreen({
   moodHistory,
   currentAttitude,
   onRetry,
-  userName,
 }: {
   score: PostConversationScore | null
   transcript: TranscriptMessage[]
   moodHistory: number[]
   currentAttitude: number
   onRetry: () => void
-  userName: string
 }) {
   if (!score) {
     return (
@@ -457,9 +357,9 @@ function EndedScreen({
         {/* Overall Score */}
         <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800 mb-4 text-center">
           <div className="text-6xl font-bold text-orange-500 mb-1">
-            {score.overall}
+            {score.overall}%
           </div>
-          <p className="text-zinc-500 text-sm">ze 100 bodů</p>
+          <p className="text-zinc-500 text-sm">celkové skóre</p>
         </div>
 
         {/* Category Scores */}
@@ -470,22 +370,15 @@ function EndedScreen({
           <ScoreBar label="Soulad s pravidly" value={score.categories.compliance} />
         </div>
 
-        {/* Summary */}
-        <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 mb-4">
-          <p className="text-zinc-300 text-sm">{score.summary}</p>
-        </div>
-
-        {/* Highlights & Improvements */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {/* Highlights → Improvements → Fails */}
+        <div className="space-y-4 mb-6">
           {score.highlights.length > 0 && (
             <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800">
-              <h3 className="text-green-400 text-xs font-medium mb-2">
-                ✅ Co se povedlo
-              </h3>
+              <h3 className="text-green-400 text-xs font-medium mb-2">Co se povedlo</h3>
               <ul className="space-y-1.5">
                 {score.highlights.map((h, i) => (
                   <li key={i} className="text-zinc-400 text-sm flex gap-2">
-                    <span className="text-green-600 shrink-0">•</span>
+                    <span className="text-green-600 shrink-0">+</span>
                     {h}
                   </li>
                 ))}
@@ -495,14 +388,26 @@ function EndedScreen({
 
           {score.improvements.length > 0 && (
             <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800">
-              <h3 className="text-orange-400 text-xs font-medium mb-2">
-                💡 Tipy na zlepšení
-              </h3>
+              <h3 className="text-orange-400 text-xs font-medium mb-2">Tipy na zlepšení</h3>
               <ul className="space-y-1.5">
                 {score.improvements.map((imp, i) => (
                   <li key={i} className="text-zinc-400 text-sm flex gap-2">
-                    <span className="text-orange-600 shrink-0">•</span>
+                    <span className="text-orange-600 shrink-0">→</span>
                     {imp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {score.fails.length > 0 && (
+            <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800">
+              <h3 className="text-red-400 text-xs font-medium mb-2">Chyby</h3>
+              <ul className="space-y-1.5">
+                {score.fails.map((f, i) => (
+                  <li key={i} className="text-zinc-400 text-sm flex gap-2">
+                    <span className="text-red-600 shrink-0">-</span>
+                    {f}
                   </li>
                 ))}
               </ul>
@@ -515,11 +420,9 @@ function EndedScreen({
           onClick={onRetry}
           className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-bold py-3.5 px-8 rounded-xl transition-colors mb-4"
         >
-          🔄 Zkusit znovu
+          Zkusit znovu
         </button>
 
-        {/* Leaderboard */}
-        <Leaderboard currentUser={userName} />
       </div>
     </div>
   )
@@ -823,7 +726,6 @@ function SessionPage({ userName, showDebug, setShowDebug, onLogout }: {
               moodHistory={session.moodHistory}
               currentAttitude={session.currentAttitude}
               onRetry={session.startSession}
-              userName={userName}
             />
           </div>
           {showDebug && (
