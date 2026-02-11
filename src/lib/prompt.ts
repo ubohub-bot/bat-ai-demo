@@ -41,7 +41,9 @@ export function buildPersonaPrompt(
     + `\n- REJECTED: nezájem, nedotčen`
     + `\n\n## Ending the Conversation`
     + `\n- Používej end_conversation když ses rozhodl — NETAHEJ TO.`
-    + `\n- VŽDY řekni rozloučení ve STEJNÉ odpovědi jako end_conversation.`
+    + `\n- VŽDY řekni rozloučení NAHLAS ve STEJNÉ odpovědi jako end_conversation — nikdy nevolej end_conversation bez rozloučení!`
+    + `\n- Když vidíš UKONČI v bloku STAV ROZHOVORU: NEJDŘÍV řekni rozloučení NAHLAS (audio), POTOM zavolej end_conversation.`
+    + `\n- Použij rozloučení z sekce "Rozloučení podle výsledku" ve svém promptu.`
 
   return { systemPrompt, tools: END_CONVERSATION_TOOL }
 }

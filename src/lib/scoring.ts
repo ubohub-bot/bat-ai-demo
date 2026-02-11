@@ -96,6 +96,12 @@ ${detectedForbiddenWords.length > 0 ? detectedForbiddenWords.join(', ') : 'Žád
 - **Znalost produktů**: Uvedla správné ceny, parametry, názvy? (viz BAT Product Quick Reference)
 - **BONUS +1** za správné konkrétní info (cena, technologie). **MALUS -1** za špatné údaje.
 
+### 4. Soulad s pravidly (compliance) - váha 20%
+- 10 = Perfektní: ověření věku + kontrola kuřáka + žádná zakázaná slova
+- 8 = Drobné nedostatky: mírně opožděná kontrola, nebo 1 zakázané slovo
+- 5 = Více chyb: několik zakázaných slov, špatné pořadí
+- 0 = Kritické selhání: chybí ověření věku, nabízení produktů nekuřákovi
+
 ## Hodnocení práce s fázemi rozhovoru
 
 ### SKEPSE fáze (výměny 1-3)
@@ -113,11 +119,7 @@ ${detectedForbiddenWords.length > 0 ? detectedForbiddenWords.join(', ') : 'Žád
 - Nabídla konkrétní akci (ukázat zařízení, starter kit)?
 - Netlačila zbytečně když zákazník odmítal?
 
-### 4. Soulad s pravidly (compliance) - váha 20%
-- 10 = Perfektní: ověření věku + kontrola kuřáka + žádná zakázaná slova
-- 8 = Drobné nedostatky: mírně opožděná kontrola, nebo 1 zakázané slovo
-- 5 = Více chyb: několik zakázaných slov, špatné pořadí
-- 0 = Kritické selhání: chybí ověření věku, nabízení produktů nekuřákovi
+
 
 ## Hodnocení věkové verifikace
 - 'passed' = Hosteska se zeptala na věk PŘED mluvením o produktech
@@ -174,13 +176,13 @@ Vrať POUZE validní JSON (bez markdown):
     }
 
     const overall =
-      categories.relationship * WEIGHTS.relationship +
+      (categories.relationship * WEIGHTS.relationship +
       categories.needsDiscovery * WEIGHTS.needsDiscovery +
       categories.productPresentation * WEIGHTS.productPresentation +
-      categories.compliance * WEIGHTS.compliance
+      categories.compliance * WEIGHTS.compliance) * 10 // Scale to 0-100%
 
     return {
-      overall: Math.round(overall * 10) / 10, // Round to 1 decimal
+      overall: Math.round(overall),
       categories,
       complianceDetails: {
         ageVerification: parseComplianceStatus(parsed.complianceDetails?.ageVerification),
@@ -240,7 +242,7 @@ function fallbackScore(
   forbiddenWords: string[]
 ): BATScore {
   return {
-    overall: 5,
+    overall: 50,
     categories: {
       relationship: 5,
       needsDiscovery: 5,

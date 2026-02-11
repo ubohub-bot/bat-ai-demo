@@ -194,12 +194,12 @@ export function buildStateInjection(
   }
   if (evaluation.shouldEnd) {
     const endMap: Record<string, string> = {
-      converted: '🟢 UKONČI: Jsi přesvědčen, přiznej to.',
-      walked_away: '🔴 UKONČI: Máš dost, odejdi.',
-      compliance_fail: '🔴 COMPLIANCE FAIL — ukonči rozhovor.',
-      gave_up: '🔴 UKONČI: Rozhovor nikam nevede, ukonči to.',
+      converted: '🟢 UKONČI: Jsi přesvědčen. NEJDŘÍV řekni NAHLAS rozloučení (přiznej to), pak zavolej end_conversation.',
+      walked_away: '🔴 UKONČI: Máš dost. NEJDŘÍV řekni NAHLAS rozloučení (odejdi), pak zavolej end_conversation.',
+      compliance_fail: '🔴 COMPLIANCE FAIL — NEJDŘÍV řekni NAHLAS rozloučení, pak zavolej end_conversation.',
+      gave_up: '🔴 UKONČI: Rozhovor nikam nevede. NEJDŘÍV řekni NAHLAS rozloučení, pak zavolej end_conversation.',
     }
-    extra += `\n${endMap[evaluation.endReason!] || '🔴 UKONČI ROZHOVOR.'}`
+    extra += `\n${endMap[evaluation.endReason!] || '🔴 UKONČI ROZHOVOR — NEJDŘÍV řekni NAHLAS rozloučení, pak zavolej end_conversation.'}`
   }
 
   return `===== STAV ROZHOVORU =====
